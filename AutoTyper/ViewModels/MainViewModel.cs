@@ -66,6 +66,50 @@ namespace AutoTyper.ViewModels
                 OnPropertyChanged(nameof(StatusColor));
                 OnPropertyChanged(nameof(ServiceButtonText));
             };
+
+            // Update System Init
+            _updateService = new UpdateService();
+            CheckForUpdatesCommand = new RelayCommand(async o => await CheckForUpdates());
+            OpenUpdatePageCommand = new RelayCommand(OpenUpdatePage);
+            DismissUpdateCommand = new RelayCommand(o => IsUpdateOverlayVisible = false);
+        }
+
+        private async Task CheckForUpdates()
+        {
+            try 
+            {
+                var update = await _updateService.CheckForUpdatesAsync();
+                if (update != null)
+                {
+                    UpdateAvailable = update;
+                    IsUpdateOverlayVisible = true;
+                }
+                else
+                {
+                    MessageBox.Show("You are using the latest version.", "Auto Typer", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Failed to check for updates. Please check your internet connection.", "Update Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void OpenUpdatePage(object obj)
+        {
+            if (UpdateAvailable?.ReleasePage != null)
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = UpdateAvailable.ReleasePage,
+                        UseShellExecute = true
+                    });
+                }
+                catch { }
+            }
+            IsUpdateOverlayVisible = false;
         }
 
         public ObservableCollection<Snippet> Snippets { get; set; }
@@ -197,11 +241,31 @@ namespace AutoTyper.ViewModels
 
         public ICommand ToggleHelpCommand { get; }
         public ICommand ToggleSettingsCommand { get; }
+        public ICommand CheckForUpdatesCommand { get; }
+        public ICommand OpenUpdatePageCommand { get; }
+        public ICommand DismissUpdateCommand { get; }
         
         // Walkthrough Commands
         public ICommand NextWalkthroughStepCommand { get; }
         public ICommand SkipWalkthroughCommand { get; }
 
+        private readonly UpdateService _updateService;
+        
+        private UpdateInfo _updateAvailable;
+        public UpdateInfo UpdateAvailable
+        {
+            get => _updateAvailable;
+            set { _updateAvailable = value; OnPropertyChanged(); }
+        }
+
+        private bool _isUpdateOverlayVisible;
+        public bool IsUpdateOverlayVisible
+        {
+            get => _isUpdateOverlayVisible;
+            set { _isUpdateOverlayVisible = value; OnPropertyChanged(); }
+        }
+
+        public string CurrentVersion => _updateService.GetCurrentVersion();
 
         public void Initialize(IntPtr windowHandle)
         {

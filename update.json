@@ -1,0 +1,9 @@
+{
+    "latestVersion": "1.0.0",
+    "releasePage": "https://github.com/goutham-11-16/Auto-Typer/releases",
+    "changelog": [
+        "Initial Release",
+        "Manual Update Check System"
+    ],
+    "mandatory": false
+}
