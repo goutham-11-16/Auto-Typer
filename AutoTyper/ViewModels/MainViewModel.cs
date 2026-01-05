@@ -51,8 +51,11 @@ namespace AutoTyper.ViewModels
                 else SkipWalkthrough(null);
             });
             SkipWalkthroughCommand = new RelayCommand(SkipWalkthrough);
+            RestartWalkthroughCommand = new RelayCommand(RestartWalkthrough);
 
             var settings = _storageService.LoadSettings();
+            _currentSettings = settings;
+
             if(!settings.IsWalkthroughCompleted)
             {
                 IsWalkthroughVisible = true;
@@ -72,8 +75,35 @@ namespace AutoTyper.ViewModels
             CheckForUpdatesCommand = new RelayCommand(async o => await CheckForUpdates());
             OpenUpdatePageCommand = new RelayCommand(OpenUpdatePage);
             DismissUpdateCommand = new RelayCommand(o => IsUpdateOverlayVisible = false);
+            TestSnippetCommand = new RelayCommand(TestSnippet, o => EditableSnippet != null);
         }
 
+        private async void TestSnippet(object obj)
+        {
+            if (EditableSnippet == null) return;
+
+            // Countdown / Focus wait
+            // We can't easily switch focus back to last app here without a "Test Window" or delay.
+            // Let's just wait 3 seconds.
+            
+            // Should valid Safety here too?
+            if (SafetyConfirmation && EditableSnippet.Text.Length > 500)
+            {
+                var result = System.Windows.MessageBox.Show($"You are about to type {EditableSnippet.Text.Length} characters. Continue?", "Long Text Warning", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
+                if (result == System.Windows.MessageBoxResult.No) return;
+            }
+
+            try 
+            {
+                await Task.Delay(3000); // 3 sec countdown
+                await _inputService.TypeTextAsync(EditableSnippet.Text, EditableSnippet.Mode, EditableSnippet.DelayPerChar, EditableSnippet.DelayPerWord, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                 System.Windows.MessageBox.Show($"Test failed: {ex.Message}");
+            }
+        }
+        
         private async Task CheckForUpdates()
         {
             try 
@@ -86,12 +116,12 @@ namespace AutoTyper.ViewModels
                 }
                 else
                 {
-                    MessageBox.Show("You are using the latest version.", "Auto Typer", MessageBoxButton.OK, MessageBoxImage.Information);
+                    System.Windows.MessageBox.Show("You are using the latest version.", "Auto Typer", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             }
             catch
             {
-                MessageBox.Show("Failed to check for updates. Please check your internet connection.", "Update Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                System.Windows.MessageBox.Show("Failed to check for updates. Please check your internet connection.", "Update Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
             }
         }
 
@@ -122,6 +152,16 @@ namespace AutoTyper.ViewModels
             {
                 if (_selectedSnippet != value)
                 {
+                    // Check for unsaved changes in previous snippet
+                    if (_selectedSnippet != null && IsDirty)
+                    {
+                         var result = System.Windows.MessageBox.Show($"Snippet '{_selectedSnippet.Name}' has unsaved changes. Save them?", "Unsaved Changes", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
+                         if (result == System.Windows.MessageBoxResult.Yes)
+                         {
+                             SaveSnippet(null);
+                         }
+                    }
+
                     _selectedSnippet = value; 
                     OnPropertyChanged();
                     
@@ -231,6 +271,104 @@ namespace AutoTyper.ViewModels
             set { _walkthroughStep = value; OnPropertyChanged(); }
         }
 
+        // Settings Properties
+        private AppSettings _currentSettings;
+
+        public bool StartMinimized
+        {
+            get => _currentSettings.StartMinimized;
+            set
+            {
+                if (_currentSettings.StartMinimized != value)
+                {
+                    _currentSettings.StartMinimized = value;
+                    OnPropertyChanged();
+                    _storageService.SaveSettings(_currentSettings);
+                }
+            }
+        }
+
+        public bool StartWithWindows
+        {
+            get => _currentSettings.StartWithWindows;
+            set
+            {
+                if (_currentSettings.StartWithWindows != value)
+                {
+                    _currentSettings.StartWithWindows = value;
+                    OnPropertyChanged();
+                    _storageService.SaveSettings(_currentSettings);
+                    SetStartup(value);
+                }
+            }
+        }
+
+        public TypingMode DefaultTypingMode
+        {
+            get => _currentSettings.DefaultTypingMode;
+            set
+            {
+                if (_currentSettings.DefaultTypingMode != value)
+                {
+                    _currentSettings.DefaultTypingMode = value;
+                    OnPropertyChanged();
+                    _storageService.SaveSettings(_currentSettings);
+                }
+            }
+        }
+
+        public int DefaultDelay
+        {
+            get => _currentSettings.DefaultDelay;
+            set
+            {
+                if (_currentSettings.DefaultDelay != value)
+                {
+                    _currentSettings.DefaultDelay = value;
+                    OnPropertyChanged();
+                    _storageService.SaveSettings(_currentSettings);
+                }
+            }
+        }
+
+        public bool SafetyConfirmation
+        {
+            get => _currentSettings.SafetyConfirmation;
+            set
+            {
+                if (_currentSettings.SafetyConfirmation != value)
+                {
+                    _currentSettings.SafetyConfirmation = value;
+                    OnPropertyChanged();
+                    _storageService.SaveSettings(_currentSettings);
+                }
+            }
+        }
+
+        private void SetStartup(bool enable)
+        {
+             try
+             {
+                 string runKey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+                 using (var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(runKey, true))
+                 {
+                     if (enable)
+                     {
+                         string path = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                         key.SetValue("AutoTyper", path);
+                     }
+                     else
+                     {
+                         key.DeleteValue("AutoTyper", false);
+                     }
+                 }
+             }
+             catch (Exception ex)
+             {
+                 System.Diagnostics.Debug.WriteLine($"Startup registry error: {ex.Message}");
+             }
+        }
+
         public ICommand AddSnippetCommand { get; }
         public ICommand RemoveSnippetCommand { get; }
         public ICommand DuplicateSnippetCommand { get; }
@@ -244,10 +382,12 @@ namespace AutoTyper.ViewModels
         public ICommand CheckForUpdatesCommand { get; }
         public ICommand OpenUpdatePageCommand { get; }
         public ICommand DismissUpdateCommand { get; }
+        public ICommand TestSnippetCommand { get; }
         
         // Walkthrough Commands
         public ICommand NextWalkthroughStepCommand { get; }
         public ICommand SkipWalkthroughCommand { get; }
+        public ICommand RestartWalkthroughCommand { get; }
 
         private readonly UpdateService _updateService;
         
@@ -271,6 +411,7 @@ namespace AutoTyper.ViewModels
         {
             _hotKeyService.Initialize(windowHandle);
             RegisterAllHotKeys();
+            _ = CheckForUpdates();
         }
 
         private void RegisterAllHotKeys()
@@ -464,6 +605,13 @@ namespace AutoTyper.ViewModels
             var settings = _storageService.LoadSettings();
             settings.IsWalkthroughCompleted = true;
             _storageService.SaveSettings(settings);
+        }
+
+        private void RestartWalkthrough(object obj)
+        {
+            IsHelpVisible = false;
+            IsWalkthroughVisible = true;
+            WalkthroughStep = 1;
         }
 
         private void TogglePause(object obj)

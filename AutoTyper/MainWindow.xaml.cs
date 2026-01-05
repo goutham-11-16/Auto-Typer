@@ -54,8 +54,12 @@ namespace AutoTyper
             var handle = new WindowInteropHelper(this).Handle;
             ViewModel?.Initialize(handle);
 
-            // Hide main window initially? Or show it?
-            // Usually start shown.
+            // Start Minimized Check
+            if (ViewModel != null && ViewModel.StartMinimized)
+            {
+                Hide();
+                // Ensure Tray Icon is there (it is initialized in Constructor)
+            }
         }
 
         private void ShowWindow()
@@ -83,7 +87,24 @@ namespace AutoTyper
             {
                 e.Cancel = true;
                 Hide();
+                return; // Minimize to tray
             }
+
+            // Check for unsaved changes
+            if (ViewModel != null && ViewModel.IsDirty)
+            {
+                var result = System.Windows.MessageBox.Show("You have unsaved changes. Do you want to save them before exiting?", "Unsaved Changes", System.Windows.MessageBoxButton.YesNoCancel, System.Windows.MessageBoxImage.Warning);
+                if (result == System.Windows.MessageBoxResult.Cancel)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+                if (result == System.Windows.MessageBoxResult.Yes)
+                {
+                    ViewModel.SaveCommand.Execute(null);
+                }
+            }
+
             base.OnClosing(e);
         }
 

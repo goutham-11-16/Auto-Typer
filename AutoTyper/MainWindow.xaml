@@ -119,6 +119,7 @@
             <Setter Property="FontStyle" Value="Italic"/>
         </Style>
 
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </Window.Resources>
 
     <Grid>
@@ -393,6 +394,7 @@
                                          <TextBlock.Style>
                                              <Style TargetType="TextBlock" BasedOn="{StaticResource HelperText}">
                                                  <Setter Property="Foreground" Value="#9CA3AF"/>
+                                                 <Setter Property="Background" Value="Transparent"/>
                                                  <Style.Triggers>
                                                      <DataTrigger Binding="{Binding IsHotkeyValid}" Value="False">
                                                          <Setter Property="Text" Value="{Binding HotkeyStatusMessage}"/>
@@ -590,6 +592,7 @@
 
                          <!-- Save/Discard Footer -->
                          <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                             <Button Content="Test" Command="{Binding TestSnippetCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
                              <Button Content="Discard Changes" Command="{Binding DiscardCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
                              <Button Content="Save Snippet" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}" Padding="20,6">
                                  <Button.ToolTip>
@@ -662,19 +665,7 @@
 
                              <!-- 5. Macros -->
                              <TextBlock Text="Macros &amp; Tokens" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
-                             <TextBlock Text="Use special tokens to simulate keys:" TextWrapping="Wrap" Margin="0,0,0,5"/>
-                             <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                 <TextBlock Text="{}{ENTER}" FontFamily="Consolas" Background="#F3F4F6" Padding="4,2"/>
-                                 <TextBlock Text=" - Press Enter key" Margin="5,0,0,0"/>
-                             </StackPanel>
-                             <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                 <TextBlock Text="{}{TAB}" FontFamily="Consolas" Background="#F3F4F6" Padding="4,2"/>
-                                 <TextBlock Text=" - Press Tab key" Margin="5,0,0,0"/>
-                             </StackPanel>
-                             <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
-                                 <TextBlock Text="{}{DELAY 500}" FontFamily="Consolas" Background="#F3F4F6" Padding="4,2"/>
-                                 <TextBlock Text=" - Wait 500ms" Margin="5,0,0,0"/>
-                             </StackPanel>
+                             <TextBlock Text="Only {ENTER}, {TAB}, and {DELAY X} are supported." TextWrapping="Wrap" Margin="0,0,0,15"/>
 
                              <!-- 6. Safety -->
                              <TextBlock Text="Safety &amp; Control" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
@@ -685,6 +676,13 @@
                              <TextBlock Text="Common Questions" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
                              <TextBlock Text="Q: Why is my hotkey not working?" FontWeight="SemiBold" TextWrapping="Wrap"/>
                              <TextBlock Text="A: Check if the Global Pause is active (Status Bar red) or if another app is using that key." TextWrapping="Wrap" Margin="0,0,0,10"/>
+                         
+                             <!-- 8. Actions -->
+                             <TextBlock Text="Other Actions" FontWeight="Bold" FontSize="16" Margin="0,10,0,5"/>
+                             <StackPanel Orientation="Horizontal">
+                                 <Button Content="Show Walkthrough Again" Command="{Binding RestartWalkthroughCommand}" Margin="0,0,10,0"/>
+                                 <Button Content="Check for Updates" Command="{Binding CheckForUpdatesCommand}"/>
+                             </StackPanel>
                          </StackPanel>
                      </ScrollViewer>
                      
@@ -707,22 +705,35 @@
                      <Button Content="X" Command="{Binding ToggleSettingsCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" 
                              Style="{StaticResource SecondaryButton}" Padding="8,4" BorderThickness="0"/>
                      
+                     <!-- REPLACED SETTINGS UI -->
                      <StackPanel Grid.Row="1" Margin="0,20">
                          <TextBlock Text="Application" FontWeight="Bold" Margin="0,0,0,10"/>
-                         <CheckBox Content="Start minimized to tray" Margin="0,0,0,10"/>
-                         <CheckBox Content="Start with Windows" Margin="0,0,0,20"/>
+                         <CheckBox Content="Start minimized to tray" IsChecked="{Binding StartMinimized}" Margin="0,0,0,10"/>
+                         <CheckBox Content="Start with Windows" IsChecked="{Binding StartWithWindows}" Margin="0,0,0,20"/>
                          
                          <TextBlock Text="Defaults" FontWeight="Bold" Margin="0,0,0,10"/>
+                         
+                         <Grid Margin="0,0,0,10">
+                             <Grid.ColumnDefinitions>
+                                 <ColumnDefinition Width="*"/>
+                                 <ColumnDefinition Width="120"/>
+                             </Grid.ColumnDefinitions>
+                             <TextBlock Text="Default Mode" VerticalAlignment="Center"/>
+                             <ComboBox Grid.Column="1" 
+                                     ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:TypingMode}}}"
+                                     SelectedItem="{Binding DefaultTypingMode}"/>
+                         </Grid>
+ 
                          <Grid Margin="0,0,0,10">
                              <Grid.ColumnDefinitions>
                                  <ColumnDefinition Width="*"/>
                                  <ColumnDefinition Width="80"/>
                              </Grid.ColumnDefinitions>
-                             <TextBlock Text="Default Delay (char)" VerticalAlignment="Center"/>
-                             <TextBox Text="10" Grid.Column="1"/>
+                             <TextBlock Text="Default Delay (ms)" VerticalAlignment="Center"/>
+                             <TextBox Text="{Binding DefaultDelay, UpdateSourceTrigger=PropertyChanged}" Grid.Column="1" Padding="4"/>
                          </Grid>
                          
-                         <TextBlock Text="Note: These settings are placeholders for UI demonstration only." Foreground="Gray" FontStyle="Italic" TextWrapping="Wrap"/>
+                         <CheckBox Content="Safety Warn for Long Text" IsChecked="{Binding SafetyConfirmation}" Margin="0,10,0,0"/>
                      </StackPanel>
                      
                      <Button Grid.Row="2" Content="Close" Command="{Binding ToggleSettingsCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right"/>
@@ -861,6 +872,44 @@
                 </Border>
             </Grid>
 
+        </Grid>
+
+        <!-- UPDATE OVERLAY -->
+        <Grid Visibility="{Binding IsUpdateOverlayVisible, Converter={StaticResource BoolToVisibilityConverter}}" Panel.ZIndex="1000">
+            <Border Background="Black" Opacity="0.5"/>
+            <Border Background="White" CornerRadius="8" Width="400" VerticalAlignment="Center" HorizontalAlignment="Center" Padding="20">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.2"/>
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="Update Available" FontSize="18" FontWeight="Bold" Margin="0,0,0,10"/>
+                    
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                        <TextBlock Text="New Version: " Foreground="#6B7280"/>
+                        <TextBlock Text="{Binding UpdateAvailable.LatestVersion}" FontWeight="SemiBold"/>
+                    </StackPanel>
+
+                    <TextBlock Text="What's New:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <Border Background="#F9FAFB" CornerRadius="4" Padding="10" Margin="0,0,0,15" Height="100">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding UpdateAvailable.Changelog}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" Margin="0,2" TextWrapping="Wrap" Foreground="#374151"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Border>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Later" Command="{Binding DismissUpdateCommand}" 
+                                Background="Transparent" BorderThickness="0" Foreground="#6B7280" Margin="0,0,10,0"/>
+                        <Button Content="Open Download Page" Command="{Binding OpenUpdatePageCommand}" 
+                                Style="{StaticResource PrimaryButton}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
         </Grid>
 
     </Grid>
