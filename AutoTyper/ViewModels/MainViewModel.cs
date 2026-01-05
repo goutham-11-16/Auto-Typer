@@ -76,6 +76,7 @@ namespace AutoTyper.ViewModels
             OpenUpdatePageCommand = new RelayCommand(OpenUpdatePage);
             DismissUpdateCommand = new RelayCommand(o => IsUpdateOverlayVisible = false);
             TestSnippetCommand = new RelayCommand(TestSnippet, o => EditableSnippet != null);
+            OpenUrlCommand = new RelayCommand(OpenUrl);
         }
 
         private async void TestSnippet(object obj)
@@ -140,6 +141,22 @@ namespace AutoTyper.ViewModels
                 catch { }
             }
             IsUpdateOverlayVisible = false;
+        }
+
+        private void OpenUrl(object obj)
+        {
+            if (obj is string url)
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = url,
+                        UseShellExecute = true
+                    });
+                }
+                catch { }
+            }
         }
 
         public ObservableCollection<Snippet> Snippets { get; set; }
@@ -383,6 +400,7 @@ namespace AutoTyper.ViewModels
         public ICommand OpenUpdatePageCommand { get; }
         public ICommand DismissUpdateCommand { get; }
         public ICommand TestSnippetCommand { get; }
+        public ICommand OpenUrlCommand { get; }
         
         // Walkthrough Commands
         public ICommand NextWalkthroughStepCommand { get; }
