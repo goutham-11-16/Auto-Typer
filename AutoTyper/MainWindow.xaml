@@ -1,0 +1,867 @@
+﻿<Window x:Class="AutoTyper.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AutoTyper"
+        xmlns:vm="clr-namespace:AutoTyper.ViewModels"
+        xmlns:models="clr-namespace:AutoTyper.Models"
+        mc:Ignorable="d"
+        Title="Auto Typer - byGo" Height="720" Width="1100"
+        Icon="logo.png"
+        ResizeMode="CanResizeWithGrip"
+        WindowStartupLocation="CenterScreen"
+        Background="#F3F4F6"
+        FontFamily="Segoe UI, Segoe UI Variable, sans-serif">
+
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
+
+    <Window.Resources>
+        <!-- COLORS -->
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="PrimaryHoverBrush" Color="#2563EB"/>
+        <SolidColorBrush x:Key="DangerBrush" Color="#EF4444"/>
+        <SolidColorBrush x:Key="SuccessBrush" Color="#10B981"/>
+        <SolidColorBrush x:Key="TextDarkBrush" Color="#1F2937"/>
+        <SolidColorBrush x:Key="TextLightBrush" Color="#6B7280"/>
+        <SolidColorBrush x:Key="BorderBrush" Color="#E5E7EB"/>
+        <SolidColorBrush x:Key="CardBackgroundBrush" Color="#FFFFFF"/>
+
+        <!-- CONVERTERS -->
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        
+        <!-- STYLES -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect Color="Black" Direction="270" ShadowDepth="1" BlurRadius="4" Opacity="0.05"/>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" CornerRadius="6" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.9"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Opacity" Value="0.8"/>
+                                <Setter TargetName="border" Property="RenderTransform">
+                                    <Setter.Value>
+                                        <ScaleTransform ScaleX="0.98" ScaleY="0.98" CenterX="0.5" CenterY="0.5"/>
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Opacity" Value="0.5"/>
+                                <Setter TargetName="border" Property="Background" Value="#F3F4F6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{StaticResource PrimaryBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource TextDarkBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+        </Style>
+        
+        <Style x:Key="DestructiveButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#FFF5F5"/>
+            <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+            <Setter Property="BorderBrush" Value="#FED7D7"/>
+        </Style>
+        
+        <!-- Token Button -->
+        <Style x:Key="TokenButton" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Background" Value="#F3F4F6"/>
+            <Setter Property="Margin" Value="0,0,5,0"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+        </Style>
+
+        <Style x:Key="FormLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource TextLightBrush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+
+        <Style x:Key="HelperText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#9CA3AF"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Top Bar -->
+            <RowDefinition Height="*"/>    <!-- Main Content -->
+            <RowDefinition Height="Auto"/> <!-- Footer -->
+        </Grid.RowDefinitions>
+
+        <!-- ========= TOP ACTION BAR ========= -->
+        <Border Grid.Row="0" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/> <!-- Brand -->
+                    <ColumnDefinition Width="*"/>    <!-- Spacer -->
+                    <ColumnDefinition Width="Auto"/> <!-- Service Control -->
+                    <ColumnDefinition Width="20"/>   <!-- Gap -->
+                    <ColumnDefinition Width="Auto"/> <!-- Actions -->
+                </Grid.ColumnDefinitions>
+
+                <!-- Brand / Title -->
+                <StackPanel Orientation="Horizontal" Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Auto Typer" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}"/>
+                    <TextBlock Text="byGo" FontSize="18" FontWeight="Light" Foreground="{StaticResource TextLightBrush}" Margin="4,0,0,0"/>
+                </StackPanel>
+
+                <!-- Service Toggle / Status Badge -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border CornerRadius="12" Padding="12,4" Margin="0,0,15,0">
+                         <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#DCFCE7"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                        <Setter Property="Background" Value="#FEE2E2"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                         </Border.Style>
+                         <StackPanel Orientation="Horizontal">
+                             <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,6,0">
+                                 <Ellipse.Style>
+                                     <Style TargetType="Ellipse">
+                                         <Setter Property="Fill" Value="{StaticResource SuccessBrush}"/>
+                                         <Style.Triggers>
+                                             <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                                 <Setter Property="Fill" Value="{StaticResource DangerBrush}"/>
+                                             </DataTrigger>
+                                         </Style.Triggers>
+                                     </Style>
+                                 </Ellipse.Style>
+                             </Ellipse>
+                             <TextBlock FontWeight="Bold" FontSize="12">
+                                 <TextBlock.Style>
+                                     <Style TargetType="TextBlock">
+                                         <Setter Property="Text" Value="SERVICE ACTIVE"/>
+                                         <Setter Property="Foreground" Value="#065F46"/>
+                                         <Style.Triggers>
+                                             <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                                 <Setter Property="Text" Value="SERVICE PAUSED"/>
+                                                 <Setter Property="Foreground" Value="#991B1B"/>
+                                             </DataTrigger>
+                                         </Style.Triggers>
+                                     </Style>
+                                 </TextBlock.Style>
+                             </TextBlock>
+                         </StackPanel>
+                    </Border>
+                    
+                    <Button Command="{Binding TogglePauseCommand}" Padding="15,6">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+                                <Setter Property="Content" Value="Pause Service"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                        <Setter Property="Content" Value="Resume Service"/>
+                                        <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Help" Command="{Binding ToggleHelpCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,8,0"/>
+                    <Button Content="Settings" Command="{Binding ToggleSettingsCommand}" Style="{StaticResource SecondaryButton}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ========= MAIN CONTENT ========= -->
+        <Grid Grid.Row="1" Margin="20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="320"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT COLUMN: SNIPPET LIST -->
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <!-- Sidebar Header -->
+                    <Border Grid.Row="0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="15">
+                        <TextBlock Text="Snippets" FontWeight="Bold" FontSize="16" Foreground="{StaticResource TextDarkBrush}"/>
+                    </Border>
+
+                    <!-- List Area -->
+                    <ListBox Grid.Row="1" ItemsSource="{Binding Snippets}" SelectedItem="{Binding SelectedSnippet}" 
+                             BorderThickness="0" Background="Transparent" Padding="5" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                         <ListBox.ItemContainerStyle>
+                             <Style TargetType="ListBoxItem">
+                                 <Setter Property="Padding" Value="10"/>
+                                 <Setter Property="Margin" Value="0,3"/>
+                                 <Setter Property="Cursor" Value="Hand"/>
+                                 <Setter Property="Template">
+                                     <Setter.Value>
+                                         <ControlTemplate TargetType="ListBoxItem">
+                                             <Border x:Name="border" CornerRadius="6" Background="Transparent" Padding="{TemplateBinding Padding}">
+                                                 <ContentPresenter/>
+                                             </Border>
+                                             <ControlTemplate.Triggers>
+                                                 <Trigger Property="IsMouseOver" Value="True">
+                                                     <Setter TargetName="border" Property="Background" Value="#F3F4F6"/>
+                                                 </Trigger>
+                                                 <Trigger Property="IsSelected" Value="True">
+                                                     <Setter TargetName="border" Property="Background" Value="#EFF6FF"/>
+                                                     <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                                     <Setter TargetName="border" Property="BorderThickness" Value="1"/>
+                                                 </Trigger>
+                                             </ControlTemplate.Triggers>
+                                         </ControlTemplate>
+                                     </Setter.Value>
+                                 </Setter>
+                             </Style>
+                         </ListBox.ItemContainerStyle>
+                         <ListBox.ItemTemplate>
+                             <DataTemplate>
+                                 <Grid>
+                                     <Grid.ColumnDefinitions>
+                                         <ColumnDefinition Width="Auto"/>
+                                         <ColumnDefinition Width="*"/>
+                                         <ColumnDefinition Width="Auto"/>
+                                     </Grid.ColumnDefinitions>
+                                     
+                                     <!-- Toggle -->
+                                     <CheckBox Grid.Column="0" IsChecked="{Binding IsEnabled}" VerticalAlignment="Center" Margin="0,0,12,0" ToolTip="Enable/Disable this snippet"/>
+                                     
+                                     <!-- Name & Summary -->
+                                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{StaticResource TextDarkBrush}"/>
+                                         <TextBlock Text="{Binding Mode}" FontSize="11" Foreground="{StaticResource TextLightBrush}"/>
+                                     </StackPanel>
+                                     
+                                     <!-- Hotkey Badge -->
+                                     <Border Grid.Column="2" Background="#E5E7EB" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                          <TextBlock Text="{Binding HotKeyDisplay}" FontSize="11" FontWeight="Bold" Foreground="#4B5563"/>
+                                     </Border>
+                                 </Grid>
+                             </DataTemplate>
+                         </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Sidebar Actions -->
+                    <Border Grid.Row="2" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="15">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                             <Button Content="+ Add" Command="{Binding AddSnippetCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,5,0"/>
+                             <Button Content="Duplicate" Command="{Binding DuplicateSnippetCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,5,0"/>
+                             <Button Content="Delete" Command="{Binding RemoveSnippetCommand}" Style="{StaticResource DestructiveButton}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- RIGHT COLUMN: DETAILS -->
+            <Grid Grid.Column="2">
+                <!-- Empty State -->
+                <Border VerticalAlignment="Stretch">
+                     <Border.Style>
+                         <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                             <Setter Property="Visibility" Value="Collapsed"/>
+                             <Style.Triggers>
+                                 <DataTrigger Binding="{Binding SelectedSnippet}" Value="{x:Null}">
+                                     <Setter Property="Visibility" Value="Visible"/>
+                                 </DataTrigger>
+                             </Style.Triggers>
+                         </Style>
+                     </Border.Style>
+                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.5">
+                         <TextBlock Text="No Snippet Selected" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                         <TextBlock Text="Select a snippet from the list or click Add." FontSize="14" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                     </StackPanel>
+                </Border>
+                
+                <!-- Main Editor -->
+                <Border VerticalAlignment="Stretch">
+                     <Border.Style>
+                         <Style TargetType="Border" BasedOn="{StaticResource CardStyle}">
+                             <Setter Property="Visibility" Value="Visible"/>
+                             <Style.Triggers>
+                                 <DataTrigger Binding="{Binding SelectedSnippet}" Value="{x:Null}">
+                                     <Setter Property="Visibility" Value="Collapsed"/>
+                                 </DataTrigger>
+                             </Style.Triggers>
+                         </Style>
+                     </Border.Style>
+                     
+                     <Grid Margin="25">
+                         <Grid.RowDefinitions>
+                             <RowDefinition Height="Auto"/> <!-- Header -->
+                             <RowDefinition Height="Auto"/> <!-- Basic Settings -->
+                             <RowDefinition Height="Auto"/> <!-- Advanced Settings -->
+                             <RowDefinition Height="Auto"/> <!-- Formatting Bar -->
+                             <RowDefinition Height="*"/>    <!-- Text Editor -->
+                             <RowDefinition Height="Auto"/> <!-- Footer -->
+                         </Grid.RowDefinitions>
+
+                         <Grid Grid.Row="0" Margin="0,0,0,20">
+                             <TextBlock Text="Edit Snippet" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}"/>
+                             <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource DangerBrush}" FontWeight="SemiBold" FontSize="12" Text="Unsaved Changes">
+                                 <TextBlock.Style>
+                                     <Style TargetType="TextBlock">
+                                         <Setter Property="Visibility" Value="Collapsed"/>
+                                          <Style.Triggers>
+                                              <DataTrigger Binding="{Binding IsDirty}" Value="True">
+                                                  <Setter Property="Visibility" Value="Visible"/>
+                                              </DataTrigger>
+                                          </Style.Triggers>
+                                     </Style>
+                                 </TextBlock.Style>
+                             </TextBlock>
+                         </Grid>
+
+                         <StackPanel Grid.Row="1">
+                             <StackPanel Margin="0,0,0,15">
+                                 <TextBlock Text="Name" Style="{StaticResource FormLabel}"/>
+                                 <TextBox Text="{Binding EditableSnippet.Name, UpdateSourceTrigger=PropertyChanged}"/>
+                             </StackPanel>
+                             
+                             <Grid Margin="0,0,0,15">
+                                 <Grid.ColumnDefinitions>
+                                     <ColumnDefinition Width="*"/>
+                                     <ColumnDefinition Width="15"/>
+                                     <ColumnDefinition Width="*"/>
+                                 </Grid.ColumnDefinitions>
+                                 
+                                 <StackPanel Grid.Column="0">
+                                     <TextBlock Text="Hotkey Trigger" Style="{StaticResource FormLabel}"/>
+                                     <TextBox x:Name="HotkeyBox" IsReadOnly="True" PreviewKeyDown="HotkeyBox_PreviewKeyDown" 
+                                              Text="{Binding EditableSnippet.HotKeyDisplay, Mode=OneWay}"
+                                              ToolTip="Click and press your key combo. Safe keys like F7-F12 or Ctrl+Alt combinations are recommended.">
+                                          <TextBox.Style>
+                                              <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                                  <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                                  <Style.Triggers>
+                                                      <DataTrigger Binding="{Binding IsHotkeyValid}" Value="False">
+                                                          <Setter Property="BorderBrush" Value="{StaticResource DangerBrush}"/>
+                                                          <Setter Property="Background" Value="#FEF2F2"/>
+                                                      </DataTrigger>
+                                                  </Style.Triggers>
+                                              </Style>
+                                          </TextBox.Style>
+                                     </TextBox>
+                                     <TextBlock Text="Click box then press key combination">
+                                         <TextBlock.Style>
+                                             <Style TargetType="TextBlock" BasedOn="{StaticResource HelperText}">
+                                                 <Setter Property="Foreground" Value="#9CA3AF"/>
+                                                 <Style.Triggers>
+                                                     <DataTrigger Binding="{Binding IsHotkeyValid}" Value="False">
+                                                         <Setter Property="Text" Value="{Binding HotkeyStatusMessage}"/>
+                                                         <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                                         <Setter Property="FontWeight" Value="SemiBold"/>
+                                                     </DataTrigger>
+                                                 </Style.Triggers>
+                                             </Style>
+                                         </TextBlock.Style>
+                                     </TextBlock>
+                                 </StackPanel>
+
+                                 <StackPanel Grid.Column="2">
+                                     <TextBlock Text="Typing Mode" Style="{StaticResource FormLabel}"/>
+                                     <ComboBox ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:TypingMode}}}"
+                                               SelectedItem="{Binding EditableSnippet.Mode}" Padding="8,6" Background="#F9FAFB"/>
+                                     <TextBlock Text="Controls typing speed and behavior" Style="{StaticResource HelperText}"/>
+                                 </StackPanel>
+                             </Grid>
+                         </StackPanel>
+
+                         <!-- Advanced Options Group -->
+                         <GroupBox Grid.Row="2" Header="Advanced Typing Options" Margin="0,0,0,20" Foreground="{StaticResource TextLightBrush}" BorderBrush="{StaticResource BorderBrush}">
+                             <Grid Margin="10">
+                                 <Grid.ColumnDefinitions>
+                                     <ColumnDefinition Width="*"/>
+                                     <ColumnDefinition Width="15"/>
+                                     <ColumnDefinition Width="*"/>
+                                 </Grid.ColumnDefinitions>
+                                 
+                                 <StackPanel Grid.Column="0">
+                                     <TextBlock Text="Delay per Letter (ms)" Style="{StaticResource FormLabel}"/>
+                                     <TextBox Text="{Binding EditableSnippet.DelayPerChar, UpdateSourceTrigger=PropertyChanged}">
+                                         <TextBox.Style>
+                                              <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                                  <Style.Triggers>
+                                                     <DataTrigger Binding="{Binding EditableSnippet.Mode}" Value="Paste">
+                                                         <Setter Property="IsEnabled" Value="False"/>
+                                                         <Setter Property="Background" Value="#F3F4F6"/>
+                                                     </DataTrigger>
+                                                  </Style.Triggers>
+                                              </Style>
+                                         </TextBox.Style>
+                                     </TextBox>
+                                 </StackPanel>
+                                 
+                                 <StackPanel Grid.Column="2">
+                                     <TextBlock Text="Delay per Word (ms)" Style="{StaticResource FormLabel}"/>
+                                      <TextBox Text="{Binding EditableSnippet.DelayPerWord, UpdateSourceTrigger=PropertyChanged}">
+                                         <TextBox.Style>
+                                              <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                                  <Style.Triggers>
+                                                     <DataTrigger Binding="{Binding EditableSnippet.Mode}" Value="Paste">
+                                                         <Setter Property="IsEnabled" Value="False"/>
+                                                         <Setter Property="Background" Value="#F3F4F6"/>
+                                                     </DataTrigger>
+                                                     <DataTrigger Binding="{Binding EditableSnippet.Mode}" Value="Fast">
+                                                         <Setter Property="IsEnabled" Value="False"/>
+                                                         <Setter Property="Background" Value="#F3F4F6"/>
+                                                     </DataTrigger>
+                                                  </Style.Triggers>
+                                              </Style>
+                                         </TextBox.Style>
+                                      </TextBox>
+                                 </StackPanel>
+                             </Grid>
+                         </GroupBox>
+
+                         <!-- Context Editor Redesign -->
+                         <Grid Grid.Row="3" Grid.RowSpan="2" Margin="0,0,0,10">
+                             <Grid.RowDefinitions>
+                                 <RowDefinition Height="Auto"/>
+                                 <RowDefinition Height="*"/>
+                             </Grid.RowDefinitions>
+
+                             <!-- Toolbar & Label -->
+                             <Grid Grid.Row="0" Margin="0,0,0,8">
+                                 <Grid.ColumnDefinitions>
+                                     <ColumnDefinition Width="Auto"/>
+                                     <ColumnDefinition Width="*"/>
+                                 </Grid.ColumnDefinitions>
+                                 
+                                 <TextBlock Text="Content" Style="{StaticResource FormLabel}" VerticalAlignment="Center"/>
+                                 
+                                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                     <TextBlock Text="Macros:" VerticalAlignment="Center" Foreground="#9CA3AF" FontSize="11" Margin="0,0,8,0"/>
+                                     
+                                     <!-- Chip: ENTER -->
+                                     <Button Tag="{}{ENTER}" Click="InsertToken_Click" Margin="0,0,4,0" Cursor="Hand" Background="#F3F4F6" BorderThickness="0" Padding="8,4">
+                                         <Button.Template>
+                                             <ControlTemplate TargetType="Button">
+                                                 <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                                     <TextBlock Text="{}{ENTER}" FontSize="11" FontWeight="SemiBold" Foreground="#4B5563"/>
+                                                 </Border>
+                                                 <ControlTemplate.Triggers>
+                                                     <Trigger Property="IsMouseOver" Value="True">
+                                                         <Setter Property="Background" Value="#E5E7EB"/>
+                                                     </Trigger>
+                                                 </ControlTemplate.Triggers>
+                                             </ControlTemplate>
+                                         </Button.Template>
+                                     </Button>
+
+                                     <!-- Chip: TAB -->
+                                     <Button Tag="{}{TAB}" Click="InsertToken_Click" Margin="0,0,4,0" Cursor="Hand" Background="#F3F4F6" BorderThickness="0" Padding="8,4">
+                                         <Button.Template>
+                                             <ControlTemplate TargetType="Button">
+                                                 <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                                     <TextBlock Text="{}{TAB}" FontSize="11" FontWeight="SemiBold" Foreground="#4B5563"/>
+                                                 </Border>
+                                                 <ControlTemplate.Triggers>
+                                                     <Trigger Property="IsMouseOver" Value="True">
+                                                         <Setter Property="Background" Value="#E5E7EB"/>
+                                                     </Trigger>
+                                                 </ControlTemplate.Triggers>
+                                             </ControlTemplate>
+                                         </Button.Template>
+                                     </Button>
+
+                                     <!-- Chip: DELAY -->
+                                     <Button Tag="{}{DELAY 100}" Click="InsertToken_Click" Cursor="Hand" Background="#F3F4F6" BorderThickness="0" Padding="8,4">
+                                         <Button.Template>
+                                             <ControlTemplate TargetType="Button">
+                                                 <Border Background="{TemplateBinding Background}" CornerRadius="12" Padding="{TemplateBinding Padding}">
+                                                     <TextBlock Text="{}{DELAY}" FontSize="11" FontWeight="SemiBold" Foreground="#4B5563"/>
+                                                 </Border>
+                                                  <ControlTemplate.Triggers>
+                                                     <Trigger Property="IsMouseOver" Value="True">
+                                                         <Setter Property="Background" Value="#E5E7EB"/>
+                                                     </Trigger>
+                                                 </ControlTemplate.Triggers>
+                                             </ControlTemplate>
+                                         </Button.Template>
+                                     </Button>
+                                 </StackPanel>
+                             </Grid>
+
+                             <!-- Editor Card -->
+                             <Border Grid.Row="1" Background="White" BorderThickness="1" CornerRadius="6" Padding="0" MinHeight="150" VerticalAlignment="Stretch">
+                                 <Border.Style>
+                                     <Style TargetType="Border">
+                                         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                         <Style.Triggers>
+                                             <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                                 <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                             </Trigger>
+                                         </Style.Triggers>
+                                     </Style>
+                                 </Border.Style>
+                                 
+                                 <Grid>
+                                      <!-- Placeholder -->
+                                     <TextBlock Text="Type the text you want Auto Typer to insert..." Foreground="#9CA3AF" Margin="12,12,0,0" IsHitTestVisible="False" FontStyle="Italic">
+                                         <TextBlock.Style>
+                                             <Style TargetType="TextBlock">
+                                                 <Setter Property="Visibility" Value="Collapsed"/>
+                                                 <Style.Triggers>
+                                                     <DataTrigger Binding="{Binding EditableSnippet.Text.Length}" Value="0">
+                                                         <Setter Property="Visibility" Value="Visible"/>
+                                                     </DataTrigger>
+                                                     <DataTrigger Binding="{Binding EditableSnippet.Text}" Value="">
+                                                         <Setter Property="Visibility" Value="Visible"/>
+                                                     </DataTrigger>
+                                                     <DataTrigger Binding="{Binding EditableSnippet.Text}" Value="{x:Null}">
+                                                         <Setter Property="Visibility" Value="Visible"/>
+                                                     </DataTrigger>
+                                                 </Style.Triggers>
+                                             </Style>
+                                         </TextBlock.Style>
+                                     </TextBlock>
+
+                                     <TextBox x:Name="SnippetEditorBox"
+                                              Text="{Binding EditableSnippet.Text, UpdateSourceTrigger=PropertyChanged}"
+                                              AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap"
+                                              FontFamily="Consolas, monospace" FontSize="14" Padding="10"
+                                              BorderThickness="0" Background="Transparent"
+                                              VerticalScrollBarVisibility="Auto">
+                                          <TextBox.Style>
+                                              <Style TargetType="TextBox">
+                                                  <Setter Property="Template">
+                                                      <Setter.Value>
+                                                          <ControlTemplate TargetType="TextBox">
+                                                              <Border Background="{TemplateBinding Background}" SnapsToDevicePixels="True" BorderThickness="0">
+                                                                  <ScrollViewer x:Name="PART_ContentHost"/>
+                                                              </Border>
+                                                          </ControlTemplate>
+                                                      </Setter.Value>
+                                                  </Setter>
+                                              </Style>
+                                          </TextBox.Style>
+                                     </TextBox>
+                                 </Grid>
+                             </Border>
+                         </Grid>
+
+                         <!-- Save/Discard Footer -->
+                         <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                             <Button Content="Discard Changes" Command="{Binding DiscardCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
+                             <Button Content="Save Snippet" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}" Padding="20,6">
+                                 <Button.ToolTip>
+                                     <ToolTip Content="Save changes to active snippet. Disabled if no changes made."/>
+                                 </Button.ToolTip>
+                             </Button>
+                         </StackPanel>
+                     </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ========= FOOTER ========= -->
+        <Border Grid.Row="2" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="15,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="System Ready." Foreground="{StaticResource TextLightBrush}" FontSize="12"/>
+                <TextBlock Margin="10,0,2,0" Text="Hotkey Service:" Foreground="{StaticResource TextLightBrush}" FontSize="12"/>
+                <TextBlock Text="Running" Foreground="{StaticResource SuccessBrush}" FontWeight="Bold" FontSize="12" x:Name="ServiceStatusText">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsPaused}" Value="True">
+                                    <Setter Property="Text" Value="Stopped"/>
+                                    <Setter Property="Foreground" Value="{StaticResource DangerBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <TextBlock Margin="20,0,0,0" Text="Press Ctrl+Alt+P to toggle service globally." Foreground="{StaticResource TextLightBrush}" FontStyle="Italic" FontSize="12"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ========= HELP OVERLAY ========= -->
+        <Grid Grid.RowSpan="3" Background="#80000000" Visibility="{Binding IsHelpVisible, Converter={StaticResource BoolToVis}}" x:Name="HelpOverlay">
+             <Border Background="White" Width="600" Height="500" CornerRadius="8" Padding="20">
+                 <Grid>
+                     <Grid.RowDefinitions>
+                         <RowDefinition Height="Auto"/>
+                         <RowDefinition Height="*"/>
+                         <RowDefinition Height="Auto"/>
+                     </Grid.RowDefinitions>
+                     
+                     <TextBlock Text="Auto Typer Help" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}"/>
+                     <Button Content="X" Command="{Binding ToggleHelpCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" 
+                             Style="{StaticResource SecondaryButton}" Padding="8,4" BorderThickness="0"/>
+                     
+                     <ScrollViewer Grid.Row="1" Margin="0,20">
+                         <StackPanel>
+                             <!-- 1. Intro -->
+                             <TextBlock Text="What Is Auto Typer?" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                             <TextBlock Text="Auto Typer helps you save time by typing frequently used text with a single keystroke. It works offline and is completely private." TextWrapping="Wrap" Margin="0,0,0,15" Foreground="#4B5563"/>
+
+                             <!-- 2. Getting Started -->
+                             <TextBlock Text="Getting Started" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                             <TextBlock Text="1. Click '+ Add' to create a new snippet." TextWrapping="Wrap" Margin="0,0,0,2"/>
+                             <TextBlock Text="2. Enter a Name and the Text you want to type." TextWrapping="Wrap" Margin="0,0,0,2"/>
+                             <TextBlock Text="3. Click 'Hotkey Trigger' and press a key (e.g., F8 or Ctrl+Alt+T)." TextWrapping="Wrap" Margin="0,0,0,2"/>
+                             <TextBlock Text="4. Click 'Save Snippet'!" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                             <!-- 3. Hotkeys -->
+                             <TextBlock Text="Using Hotkeys" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                             <TextBlock Text="• Recommended: F7-F12, or Ctrl+Alt combinations." TextWrapping="Wrap" Margin="0,0,0,2"/>
+                             <TextBlock Text="• Avoid: System keys (Ctrl+C, Alt+Tab) or single letters." TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                             <!-- 4. Models -->
+                             <TextBlock Text="Typing Modes" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                             <TextBlock Text="• Human-Like: Types one by one with natural pauses." TextWrapping="Wrap" Margin="0,0,0,2"/>
+                             <TextBlock Text="• Paste: Instantly injects text (best for code or long docs)." TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                             <!-- 5. Macros -->
+                             <TextBlock Text="Macros &amp; Tokens" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                             <TextBlock Text="Use special tokens to simulate keys:" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                             <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                 <TextBlock Text="{}{ENTER}" FontFamily="Consolas" Background="#F3F4F6" Padding="4,2"/>
+                                 <TextBlock Text=" - Press Enter key" Margin="5,0,0,0"/>
+                             </StackPanel>
+                             <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                 <TextBlock Text="{}{TAB}" FontFamily="Consolas" Background="#F3F4F6" Padding="4,2"/>
+                                 <TextBlock Text=" - Press Tab key" Margin="5,0,0,0"/>
+                             </StackPanel>
+                             <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                                 <TextBlock Text="{}{DELAY 500}" FontFamily="Consolas" Background="#F3F4F6" Padding="4,2"/>
+                                 <TextBlock Text=" - Wait 500ms" Margin="5,0,0,0"/>
+                             </StackPanel>
+
+                             <!-- 6. Safety -->
+                             <TextBlock Text="Safety &amp; Control" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                             <TextBlock Text="• Pause Service: Press Ctrl+Alt+P to stop all hotkeys." TextWrapping="Wrap" Margin="0,0,0,2"/>
+                             <TextBlock Text="• Cancel Typing: Press ESC key while typing to stop immediately." TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                             <!-- 7. FAQ -->
+                             <TextBlock Text="Common Questions" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                             <TextBlock Text="Q: Why is my hotkey not working?" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                             <TextBlock Text="A: Check if the Global Pause is active (Status Bar red) or if another app is using that key." TextWrapping="Wrap" Margin="0,0,0,10"/>
+                         </StackPanel>
+                     </ScrollViewer>
+                     
+                     <Button Grid.Row="2" Content="Close" Command="{Binding ToggleHelpCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right"/>
+                 </Grid>
+             </Border>
+        </Grid>
+
+        <!-- ========= SETTINGS OVERLAY ========= -->
+        <Grid Grid.RowSpan="3" Background="#80000000" Visibility="{Binding IsSettingsVisible, Converter={StaticResource BoolToVis}}" x:Name="SettingsOverlay">
+             <Border Background="White" Width="400" Height="350" CornerRadius="8" Padding="20">
+                 <Grid>
+                     <Grid.RowDefinitions>
+                         <RowDefinition Height="Auto"/>
+                         <RowDefinition Height="*"/>
+                         <RowDefinition Height="Auto"/>
+                     </Grid.RowDefinitions>
+                     
+                     <TextBlock Text="Settings" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextDarkBrush}"/>
+                     <Button Content="X" Command="{Binding ToggleSettingsCommand}" HorizontalAlignment="Right" VerticalAlignment="Top" 
+                             Style="{StaticResource SecondaryButton}" Padding="8,4" BorderThickness="0"/>
+                     
+                     <StackPanel Grid.Row="1" Margin="0,20">
+                         <TextBlock Text="Application" FontWeight="Bold" Margin="0,0,0,10"/>
+                         <CheckBox Content="Start minimized to tray" Margin="0,0,0,10"/>
+                         <CheckBox Content="Start with Windows" Margin="0,0,0,20"/>
+                         
+                         <TextBlock Text="Defaults" FontWeight="Bold" Margin="0,0,0,10"/>
+                         <Grid Margin="0,0,0,10">
+                             <Grid.ColumnDefinitions>
+                                 <ColumnDefinition Width="*"/>
+                                 <ColumnDefinition Width="80"/>
+                             </Grid.ColumnDefinitions>
+                             <TextBlock Text="Default Delay (char)" VerticalAlignment="Center"/>
+                             <TextBox Text="10" Grid.Column="1"/>
+                         </Grid>
+                         
+                         <TextBlock Text="Note: These settings are placeholders for UI demonstration only." Foreground="Gray" FontStyle="Italic" TextWrapping="Wrap"/>
+                     </StackPanel>
+                     
+                     <Button Grid.Row="2" Content="Close" Command="{Binding ToggleSettingsCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Right"/>
+                 </Grid>
+             </Border>
+        </Grid>
+
+        <!-- ========= WALKTHROUGH OVERLAY ========= -->
+        <Grid Grid.RowSpan="3" Visibility="{Binding IsWalkthroughVisible, Converter={StaticResource BoolToVis}}" x:Name="WalkthroughOverlay" Panel.ZIndex="100">
+            <Grid Background="#B0000000"/> <!-- Dimmer -->
+            
+            <!-- Step 1: Welcome -->
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding WalkthroughStep}" Value="1">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Border Background="White" Width="400" Height="250" CornerRadius="12" Padding="30" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Welcome to Auto Typer!" FontSize="24" FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                        <TextBlock Text="Auto Typer helps you type saved text using a hotkey." TextWrapping="Wrap" FontSize="16" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,5"/>
+                         <TextBlock Text="Works offline. No keylogging." TextWrapping="Wrap" FontSize="14" Foreground="Gray" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,0,0,25"/>
+                        <Button Content="Start Tour" Command="{Binding NextWalkthroughStepCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Center" Padding="30,10"/>
+                        <Button Content="Skip" Command="{Binding SkipWalkthroughCommand}" Style="{StaticResource SecondaryButton}" BorderThickness="0" Margin="0,10,0,0" Foreground="Gray" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Step 2: Snippet List (Left) -->
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding WalkthroughStep}" Value="2">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <!-- Highlight Box over List -->
+                <Border BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="4" CornerRadius="8" Margin="20,70,0,80" HorizontalAlignment="Left" Width="320"/>
+                <!-- Info Bubble -->
+                <Border Background="White" Width="300" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="360,150,0,0" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="Snippets List" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                        <TextBlock Text="Each snippet is a piece of text you can type instantly. Manage them here." TextWrapping="Wrap" Margin="0,0,0,15"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                             <Button Content="Next" Command="{Binding NextWalkthroughStepCommand}" Style="{StaticResource PrimaryButton}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Step 3: Add Button (Bottom Left) -->
+            <Grid>
+                <Grid.Style>
+                     <Style TargetType="Grid">
+                         <Setter Property="Visibility" Value="Collapsed"/>
+                         <Style.Triggers>
+                             <DataTrigger Binding="{Binding WalkthroughStep}" Value="3">
+                                 <Setter Property="Visibility" Value="Visible"/>
+                             </DataTrigger>
+                         </Style.Triggers>
+                     </Style>
+                </Grid.Style>
+                <!-- Highlight Box -->
+                <Border BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="4" CornerRadius="8" Margin="20,0,0,25" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="320" Height="60"/>
+                <!-- Info Bubble -->
+                <Border Background="White" Width="300" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="360,0,0,40" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="Create a Snippet" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                         <TextBlock Text="Click '+ Add' to create a new snippet, give it a name, and assign a hotkey." TextWrapping="Wrap" Margin="0,0,0,15"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                             <Button Content="Next" Command="{Binding NextWalkthroughStepCommand}" Style="{StaticResource PrimaryButton}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Step 4: Hotkey Box (Right) -->
+            <Grid>
+                <Grid.Style>
+                     <Style TargetType="Grid">
+                         <Setter Property="Visibility" Value="Collapsed"/>
+                         <Style.Triggers>
+                             <DataTrigger Binding="{Binding WalkthroughStep}" Value="4">
+                                 <Setter Property="Visibility" Value="Visible"/>
+                             </DataTrigger>
+                         </Style.Triggers>
+                     </Style>
+                </Grid.Style>
+                <!-- Highlight Box -->
+                <Border BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="4" CornerRadius="8" Margin="360,150,380,0" Height="60" VerticalAlignment="Top"/>
+                 <!-- Info Bubble -->
+                <Border Background="White" Width="300" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,220,100,0" CornerRadius="8" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="Assign a Hotkey" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                         <TextBlock Text="Click the box and press a key combination (e.g., Ctrl+F1) to trigger this snippet." TextWrapping="Wrap" Margin="0,0,0,15"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                             <Button Content="Next" Command="{Binding NextWalkthroughStepCommand}" Style="{StaticResource PrimaryButton}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- Step 5: Service Status (Top Right) -->
+            <Grid>
+                 <Grid.Style>
+                     <Style TargetType="Grid">
+                         <Setter Property="Visibility" Value="Collapsed"/>
+                         <Style.Triggers>
+                             <DataTrigger Binding="{Binding WalkthroughStep}" Value="5">
+                                 <Setter Property="Visibility" Value="Visible"/>
+                             </DataTrigger>
+                         </Style.Triggers>
+                     </Style>
+                 </Grid.Style>
+                <!-- Highlight Box -->
+                <Border BorderBrush="{StaticResource PrimaryBrush}" BorderThickness="4" CornerRadius="8" Margin="0,10,240,0" HorizontalAlignment="Right" VerticalAlignment="Top" Width="200" Height="40"/>
+                 <!-- Info Bubble -->
+                <Border Background="White" Width="300" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,60,190,0" CornerRadius="8" Padding="15">
+                     <StackPanel>
+                        <TextBlock Text="Safety &amp; Control" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
+                         <TextBlock Text="Press Ctrl + Alt + P anytime to pause typing globally. Stay in control." TextWrapping="Wrap" Margin="0,0,0,15"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                             <Button Content="Finish" Command="{Binding NextWalkthroughStepCommand}" Style="{StaticResource PrimaryButton}"/>
+                        </StackPanel>
+                     </StackPanel>
+                </Border>
+            </Grid>
+
+        </Grid>
+
+    </Grid>
+</Window>

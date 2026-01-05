@@ -1,0 +1,36 @@
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww]in32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+bin/
+obj/
+Log/
+logs/
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+
+# Visual Studio Code
+.vscode/
+
+# Large files and logs
+*.log
+*.txt
+build_errors.log
+build_log*.txt
+errors.txt
+
+# Artifacts
+.gemini/
