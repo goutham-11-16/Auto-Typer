@@ -8,7 +8,7 @@
         xmlns:models="clr-namespace:AutoTyper.Models"
         mc:Ignorable="d"
         Title="Auto Typer - byGo" Height="720" Width="1100"
-        Icon="logo.png"
+        Icon="logo2.png"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
         Background="#F3F4F6"
@@ -592,7 +592,7 @@
 
                          <!-- Save/Discard Footer -->
                          <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
-                             <Button Content="Test" Command="{Binding TestSnippetCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
+
                              <Button Content="Discard Changes" Command="{Binding DiscardCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0"/>
                              <Button Content="Save Snippet" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}" Padding="20,6">
                                  <Button.ToolTip>
@@ -622,7 +622,7 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
-                <TextBlock Margin="20,0,0,0" Text="Press Ctrl+Alt+P to toggle service globally." Foreground="{StaticResource TextLightBrush}" FontStyle="Italic" FontSize="12"/>
+                <TextBlock Margin="20,0,0,0" Text="Use the 'Start/Stop Service' button to control typing." Foreground="{StaticResource TextLightBrush}" FontStyle="Italic" FontSize="12"/>
             </StackPanel>
         </Border>
 
@@ -669,8 +669,8 @@
 
                              <!-- 6. Safety -->
                              <TextBlock Text="Safety &amp; Control" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>
-                             <TextBlock Text="• Pause Service: Press Ctrl+Alt+P to stop all hotkeys." TextWrapping="Wrap" Margin="0,0,0,2"/>
-                             <TextBlock Text="• Cancel Typing: Press ESC key while typing to stop immediately." TextWrapping="Wrap" Margin="0,0,0,15"/>
+                             <TextBlock Text="• Use 'Stop Service' button in the toolbar to pause all typing." TextWrapping="Wrap" Margin="0,0,0,2"/>
+                             <TextBlock Text="• Use 'Start Service' to resume normal operation." TextWrapping="Wrap" Margin="0,0,0,15"/>
 
                              <!-- 7. FAQ -->
                              <TextBlock Text="Common Questions" FontWeight="Bold" FontSize="16" Margin="0,0,0,5"/>

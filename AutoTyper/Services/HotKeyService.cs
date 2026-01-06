@@ -18,18 +18,14 @@ namespace AutoTyper.Services
         public bool IsPaused { get; set; } = false;
         public event EventHandler<bool> PausedChanged;
 
-        // Pause Hotkey ID
-        private const int PAUSE_HOTKEY_ID = 8999;
+        // Global Pause/Resume hotkeys are removed/manual only
+
 
         public void Initialize(IntPtr windowHandle)
         {
             _windowHandle = windowHandle;
             _source = HwndSource.FromHwnd(_windowHandle);
             _source.AddHook(HwndHook);
-            
-            // Register Global Pause Hotkey (Ctrl + Alt + P)
-            // Need to catch failure here separately but for now we try best effort
-            RegisterHotKeyInternal(PAUSE_HOTKEY_ID, NativeMethods.MOD_CONTROL | NativeMethods.MOD_ALT, (uint)KeyInterop.VirtualKeyFromKey(Key.P));
         }
 
         public bool Register(ModifierKeys modifiers, Key key, Action updateCallback)
@@ -67,9 +63,6 @@ namespace AutoTyper.Services
             }
             _registry.Clear();
             _currentId = 9000;
-            
-            // Unregister Pause Hotkey
-            NativeMethods.UnregisterHotKey(_windowHandle, PAUSE_HOTKEY_ID);
         }
 
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
@@ -77,13 +70,8 @@ namespace AutoTyper.Services
             if (msg == NativeMethods.WM_HOTKEY)
             {
                 int id = wParam.ToInt32();
-                
-                if (id == PAUSE_HOTKEY_ID)
-                {
-                    TogglePause();
-                    handled = true;
-                }
-                else if (_registry.ContainsKey(id))
+
+                if (_registry.ContainsKey(id))
                 {
                     if (!IsPaused)
                     {
@@ -96,10 +84,13 @@ namespace AutoTyper.Services
             return IntPtr.Zero;
         }
 
-        private void TogglePause()
+        private void SetPaused(bool paused)
         {
-            IsPaused = !IsPaused;
-            PausedChanged?.Invoke(this, IsPaused);
+            if (IsPaused != paused)
+            {
+                IsPaused = paused;
+                PausedChanged?.Invoke(this, IsPaused);
+            }
         }
 
         public void Dispose()

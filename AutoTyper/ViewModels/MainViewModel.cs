@@ -62,48 +62,20 @@ namespace AutoTyper.ViewModels
                 WalkthroughStep = 1;
             }
 
-            _hotKeyService.PausedChanged += (s, paused) => 
-            {
-                OnPropertyChanged(nameof(IsPaused));
-                OnPropertyChanged(nameof(StatusText));
-                OnPropertyChanged(nameof(StatusColor));
-                OnPropertyChanged(nameof(ServiceButtonText));
-            };
+            // PausedChanged is legacy now, logic moved to TogglePause for manual control reliability
+
 
             // Update System Init
             _updateService = new UpdateService();
             CheckForUpdatesCommand = new RelayCommand(async o => await CheckForUpdates());
             OpenUpdatePageCommand = new RelayCommand(OpenUpdatePage);
             DismissUpdateCommand = new RelayCommand(o => IsUpdateOverlayVisible = false);
-            TestSnippetCommand = new RelayCommand(TestSnippet, o => EditableSnippet != null);
+            // TestSnippetCommand removed
             OpenUrlCommand = new RelayCommand(OpenUrl);
         }
 
-        private async void TestSnippet(object obj)
-        {
-            if (EditableSnippet == null) return;
+        // TestSnippet method removed as per cleanup
 
-            // Countdown / Focus wait
-            // We can't easily switch focus back to last app here without a "Test Window" or delay.
-            // Let's just wait 3 seconds.
-            
-            // Should valid Safety here too?
-            if (SafetyConfirmation && EditableSnippet.Text.Length > 500)
-            {
-                var result = System.Windows.MessageBox.Show($"You are about to type {EditableSnippet.Text.Length} characters. Continue?", "Long Text Warning", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
-                if (result == System.Windows.MessageBoxResult.No) return;
-            }
-
-            try 
-            {
-                await Task.Delay(3000); // 3 sec countdown
-                await _inputService.TypeTextAsync(EditableSnippet.Text, EditableSnippet.Mode, EditableSnippet.DelayPerChar, EditableSnippet.DelayPerWord, CancellationToken.None);
-            }
-            catch (Exception ex)
-            {
-                 System.Windows.MessageBox.Show($"Test failed: {ex.Message}");
-            }
-        }
         
         private async Task CheckForUpdates()
         {
@@ -399,7 +371,7 @@ namespace AutoTyper.ViewModels
         public ICommand CheckForUpdatesCommand { get; }
         public ICommand OpenUpdatePageCommand { get; }
         public ICommand DismissUpdateCommand { get; }
-        public ICommand TestSnippetCommand { get; }
+
         public ICommand OpenUrlCommand { get; }
         
         // Walkthrough Commands
@@ -468,13 +440,22 @@ namespace AutoTyper.ViewModels
 
             try
             {
-                await _inputService.TypeTextAsync(snippet.Text, snippet.Mode, snippet.DelayPerChar, snippet.DelayPerWord, _typingCts.Token);
+                // We pass 0 for startIndex and null for progress since Resume is removed
+                await _inputService.TypeTextAsync(snippet.Text, snippet.Mode, snippet.DelayPerChar, snippet.DelayPerWord, _typingCts.Token, 0, null);
             }
             catch (OperationCanceledException)
             {
                 // Typing cancelled
             }
+            finally
+            {
+                 if (_typingCts != null && !_typingCts.IsCancellationRequested)
+                 {
+                     // Cleanup if finished naturally
+                 }
+            }
         }
+
         
         public void HandleHotkeyInput(Key key, ModifierKeys modifiers)
         {
@@ -634,7 +615,29 @@ namespace AutoTyper.ViewModels
 
         private void TogglePause(object obj)
         {
-            _hotKeyService.IsPaused = !_hotKeyService.IsPaused;
+            if (!_hotKeyService.IsPaused)
+            {
+                // We are switching TO Paused state (Stop)
+                // Stop Service (Visuals)
+                _hotKeyService.IsPaused = true;
+                
+                // Cancel Execution Immediately
+                if (_typingCts != null)
+                {
+                    try { _typingCts.Cancel(); } catch {}
+                }
+            }
+            else
+            {
+                // We are switching TO Active state (Start)
+                _hotKeyService.IsPaused = false;
+            }
+            
+            UpdateStatusProperties();
+        }
+
+        private void UpdateStatusProperties()
+        {
             OnPropertyChanged(nameof(IsPaused));
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(StatusColor));

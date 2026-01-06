@@ -18,22 +18,55 @@ namespace AutoTyper
 
         public MainWindow()
         {
-            InitializeComponent();
-            
-            // Setup Tray Icon
+            try
+            {
+                InitializeComponent();
+                Loaded += MainWindow_Loaded;
+            }
+            catch (Exception ex)
+            {
+                System.IO.File.WriteAllText("startup_error.txt", ex.ToString());
+                System.Windows.MessageBox.Show($"Window Initialization Error: {ex.Message}\n\n{ex.StackTrace}", "Auto Typer Init Fail", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                throw;
+            }
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            try { System.IO.File.AppendAllText("startup_log.txt", "MainWindow Loaded Event\n"); } catch { }
+            // Initialize ViewModel
+            var handle = new WindowInteropHelper(this).Handle;
+            if (ViewModel != null)
+            {
+                ViewModel.Initialize(handle);
+            }
+
+            // Setup Tray Icon (Moved from Constructor)
+            SetupTrayIcon();
+
+            // Explicitly show window (Override any previous hidden state)
+            Show();
+            Activate();
+            try { System.IO.File.AppendAllText("startup_log.txt", "MainWindow Activated\n"); } catch { }
+        }
+
+        private void SetupTrayIcon()
+        {
             _notifyIcon = new FormNotifyIcon();
             try
             {
-                // Create Icon from logo.png. System.Drawing.Icon doesn't support PNG directly in constructor.
-                // But we can load Bitmap and convert.
-                using (var bitmap = new System.Drawing.Bitmap("logo.png"))
+                var resourceInfo = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/logo.png"));
+                if (resourceInfo != null)
                 {
-                    _notifyIcon.Icon = System.Drawing.Icon.FromHandle(bitmap.GetHicon());
+                    using (var stream = resourceInfo.Stream)
+                    using (var bitmap = new System.Drawing.Bitmap(stream))
+                    {
+                        _notifyIcon.Icon = System.Drawing.Icon.FromHandle(bitmap.GetHicon());
+                    }
                 }
             }
             catch
             {
-                // Fallback if logo invalid
                 _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
             } 
             _notifyIcon.Visible = true;
@@ -51,15 +84,15 @@ namespace AutoTyper
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
-            var handle = new WindowInteropHelper(this).Handle;
-            ViewModel?.Initialize(handle);
-
-            // Start Minimized Check
+            // Moved Initialization to Loaded event
+            
+            // DISABLED MINIMIZE LOGIC FOR VERIFICATION
+            /*
             if (ViewModel != null && ViewModel.StartMinimized)
             {
                 Hide();
-                // Ensure Tray Icon is there (it is initialized in Constructor)
             }
+            */
         }
 
         private void ShowWindow()
@@ -72,12 +105,11 @@ namespace AutoTyper
         private void ExitApp()
         {
             _isExplicitExit = true;
-            _notifyIcon.Visible = false;
-            _notifyIcon.Dispose();
-            // Trigger ViewModel Exit just in case cleanup needs to run there too, 
-            // but we can just Close() and let closing handler proceed.
-            // ViewModel.ExitCommand.Execute(null); 
-            // Better to let ViewModel handle disposal, but we need to stop the cancel in Closing.
+            if (_notifyIcon != null)
+            {
+                _notifyIcon.Visible = false;
+                _notifyIcon.Dispose();
+            }
             System.Windows.Application.Current.Shutdown();
         }
 
@@ -85,9 +117,10 @@ namespace AutoTyper
         {
             if (!_isExplicitExit)
             {
-                e.Cancel = true;
-                Hide();
-                return; // Minimize to tray
+                // DISABLED TRAY CLOSE FOR VERIFICATION - Application will close normally
+                // e.Cancel = true;
+                // Hide();
+                // return; 
             }
 
             // Check for unsaved changes
@@ -114,7 +147,6 @@ namespace AutoTyper
 
             var key = (e.Key == WPFKey.System ? e.SystemKey : e.Key);
 
-            // Ignore modifier keys alone
             if (key == WPFKey.LeftCtrl || key == WPFKey.RightCtrl || 
                 key == WPFKey.LeftAlt || key == WPFKey.RightAlt || 
                 key == WPFKey.LeftShift || key == WPFKey.RightShift ||
@@ -133,20 +165,12 @@ namespace AutoTyper
         {
             if (sender is System.Windows.Controls.Button btn && btn.Tag is string token)
             {
-                // Find the TextBox. Since we know the structure or can name it, let's use name.
-                // But accessing x:Name="SnippetEditorBox" directly is better if available.
-                // Assuming I name the TextBox "SnippetEditorBox" in XAML.
                 if (SnippetEditorBox != null)
                 {
                     int caretIndex = SnippetEditorBox.CaretIndex;
                     SnippetEditorBox.Text = SnippetEditorBox.Text.Insert(caretIndex, token);
                     SnippetEditorBox.CaretIndex = caretIndex + token.Length;
                     SnippetEditorBox.Focus();
-                    // Force update binding since we modified Text directly? 
-                    // Usually Text binding with UpdateSourceTrigger=PropertyChanged handles it if PropertyChanged fires.
-                    // But direct property set on TextBox might not fire the source update if it's OneWayToSource or if not focused.
-                    // Actually, modifying .Text programmatically DOES NOT automatically trigger the binding Source update in some cases.
-                    // Let's manually get the binding expression and update.
                     var binding = SnippetEditorBox.GetBindingExpression(System.Windows.Controls.TextBox.TextProperty);
                     binding?.UpdateSource();
                 }

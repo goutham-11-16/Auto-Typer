@@ -1,80 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Typer byGo - Windows Auto-Typing Utility</title>
+    <title>Auto Typer byGo - The Ultimate Windows Productivity Tool</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="icon" type="image/png" href="assets/logo2.png">
 </head>
+
 <body>
     <header>
         <div class="container">
             <nav>
                 <div class="logo">
-                    <img src="assets/logo.png" alt="Logo">
+                    <img src="assets/logo2.png" alt="Logo">
                     <span>Auto Typer</span>
                 </div>
                 <div class="nav-links">
                     <a href="index.html" class="active">Home</a>
                     <a href="download.html">Download</a>
                     <a href="help.html">Help</a>
-                    <a href="privacy.html">Privacy Policy</a>
+                    <a href="privacy.html">Privacy</a>
                 </div>
             </nav>
         </div>
     </header>
 
     <main>
+        <!-- HERO SECTION -->
         <section class="hero">
             <div class="container">
-                <h1>Save Time with Auto Typer</h1>
-                <p class="tagline">A clean, safe, and offline text expansion utility for Windows. Type less, do more.</p>
-                
+                <h1>Type Less. Do More.</h1>
+                <p class="tagline">The clean, offline text automation tool for Windows. <br>Create custom hotkeys for
+                    your most used emails, code, and messages.</p>
+
                 <div class="cta-group">
-                    <a href="download.html" class="btn btn-primary">Download (Coming Soon)</a>
-                    <p style="margin-top: 10px; font-size: 0.9rem;">Compatible with Windows 10 / 11</p>
+                    <a href="https://github.com/goutham-11-16/Auto-Typer/releases" class="btn btn-primary"
+                        target="_blank">Download for Windows</a>
+                    <p style="margin-top: 10px; font-size: 0.9rem; color: var(--text-secondary);">Works on Windows 10 &
+                        11 • Open Source</p>
                 </div>
 
-                <!-- Screenshot Placeholder -->
+                <!-- Screenshot Area -->
                 <div class="hero-image-container">
-                    <img src="assets/screenshots/app-preview.png" alt="Auto Typer Application Screenshot" class="hero-image" onerror="this.src='https://via.placeholder.com/1000x600?text=App+Screenshot+Placeholder'">
+                    <img src="assets/screenshots/app-preview.png" alt="Auto Typer Application Interface"
+                        class="hero-image" onerror="this.style.display='none'">
+                    <!-- Fallback text if image missing -->
+                    <p style="margin-top:20px; font-style:italic; font-size:0.9rem; color:#9CA3AF;">*Simple, Card-Based
+                        Interface*</p>
                 </div>
             </div>
         </section>
 
+        <!-- FEATURES GRID -->
         <section class="features">
             <div class="container">
-                <h2 style="text-align: center;">Why Auto Typer?</h2>
+                <h2 style="text-align: center;">Why Choose Auto Typer?</h2>
                 <div class="grid">
                     <div class="card">
-                        <h3>⚡ Instant Typing</h3>
-                        <p>Trigger complex snippets with a single hotkey (F7-F12 or Custom). Supports both instant paste and human-like typing modes.</p>
+                        <h3>⚡ Instant Expansion</h3>
+                        <p>Turn short abbreviations (e.g., <code>F8</code>) into full paragraphs instantly. Save hours
+                            of repetitive typing every week.</p>
                     </div>
                     <div class="card">
-                        <h3>🔒 100% Offline & Safe</h3>
-                        <p>Your privacy matters. Auto Typer runs completely offline with no data collection, tracking, or cloud sync.</p>
+                        <h3>🔒 100% Offline</h3>
+                        <p>Your data stays on your machine. No cloud sync, no tracking, and no internet connection
+                            required. Complete privacy.</p>
                     </div>
                     <div class="card">
-                        <h3>🛑 Total Control</h3>
-                        <p>Built-in safety features include a Global Pause hotkey (Ctrl+Alt+P) and immediate cancellation by pressing key.</p>
+                        <h3>🎮 Total Control</h3>
+                        <p>Toggle the service On/Off with a single click. Panic button included: Press <code>ESC</code>
+                            to stop typing immediately.</p>
                     </div>
                     <div class="card">
                         <h3>🤖 Smart Macros</h3>
-                        <p>Insert dynamic elements like {ENTER}, {TAB}, or delays into your snippets to automate simple form filling.</p>
+                        <p>Automate forms with tokens like <code>{TAB}</code>, <code>{ENTER}</code>, and
+                            <code>{DELAY}</code> to navigate inputs precisely.</p>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- HOW IT WORKS -->
+        <section class="content-wrapper" style="margin-top: 0;">
+            <h2 style="text-align: center;">How It Works</h2>
+            <div style="margin-top: 30px;">
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: var(--primary-color);">1. Create</h3>
+                    <p>Click <strong>+ Add</strong> and type your reusable text snippet in the editor.</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: var(--primary-color);">2. Assign</h3>
+                    <p>Set a custom hotkey trigger. We support standard keys (<code>F1-F12</code>) and combos
+                        (<code>Ctrl+Alt+T</code>).</p>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: var(--primary-color);">3. Type</h3>
+                    <p>Open any application—Notepad, Chrome, Slack—and press your hotkey. Watch the magic happen!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- DOWNLOAD CTA -->
+        <section class="container" style="text-align: center; padding-bottom: 80px;">
+            <div class="download-placeholder">
+                <h2>Ready to boost your productivity?</h2>
+                <p>Join thousands of users saving time today.</p>
+                <br>
+                <a href="https://github.com/goutham-11-16/Auto-Typer/releases" class="btn btn-primary">Get Auto Typer
+                    Now</a>
             </div>
         </section>
     </main>
 
     <footer>
         <div class="container">
-            <p>&copy; 2024 Auto Typer byGo. All rights reserved.</p>
+            <p>&copy; 2026 Auto Typer byGo. Developed by Goutham Reddy.</p>
             <p style="margin-top: 10px;">
-                <a href="https://github.com/goutham-11-16/Auto-Typer" target="_blank" style="color: var(--primary-color);">View Source on GitHub</a>
+                <a href="https://github.com/goutham-11-16/Auto-Typer" target="_blank"
+                    style="color: var(--primary-color);">View Source Code</a>
             </p>
         </div>
     </footer>
 </body>
+
 </html>

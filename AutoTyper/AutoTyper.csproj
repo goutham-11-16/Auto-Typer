@@ -2,22 +2,36 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AssemblyName>AutoTyper-byGo</AssemblyName>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
+    
+    <!-- Application Metadata -->
     <Version>1.0.0</Version>
+    <Authors>Goutham Reddy</Authors>
+    <Company>Goutham Reddy</Company>
+    <Product>Auto Typer byGo</Product>
+    <Description>A clean, offline Windows utility for typing saved text using hotkeys.</Description>
+    <Copyright>© 2026 Goutham Reddy</Copyright>
+    
+    <!-- Build Configurations -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <ApplicationIcon>..\logo2.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="logo.png" />
+    <None Remove="logo2.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="logo.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <Resource Include="logo2.png" />
   </ItemGroup>
 
 </Project>

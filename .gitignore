@@ -34,3 +34,10 @@ errors.txt
 
 # Artifacts
 .gemini/
+
+# Specific Build Output
+build.log
+build_err.txt
+build_log_attempt.txt
+build_output*.log
+msbuild.log
