@@ -26,7 +26,7 @@ OutputBaseFilename=AutoTyper-byGo-Setup
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=logo2.ico
+SetupIconFile=logo3.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
 [Languages]

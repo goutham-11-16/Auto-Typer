@@ -8,7 +8,7 @@
         xmlns:models="clr-namespace:AutoTyper.Models"
         mc:Ignorable="d"
         Title="Auto Typer - byGo" Height="720" Width="1100"
-        Icon="logo2.png"
+        Icon="logo3.png"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen"
         Background="#F3F4F6"

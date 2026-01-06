@@ -23,7 +23,7 @@
     <PublishSingleFile>true</PublishSingleFile>
     <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-    <ApplicationIcon>..\logo2.ico</ApplicationIcon>
+    <ApplicationIcon>logo3.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,7 +31,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="logo2.png" />
+    <Resource Include="logo3.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
+    <Content Include="logo3.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>
