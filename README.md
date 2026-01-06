@@ -31,12 +31,24 @@
 
 ## 📥 Installation
 
-1.  **Download** the latest release from the [Releases Page](https://github.com/goutham-11-16/Auto-Typer/releases).
-2.  **Extract** the zip file (if applicable).
-3.  **Run** `AutoTyper.exe`.
-    *   *No installation wizard required. It's portable!*
+**Option 1: Installer (Recommended)**
+1.  Download `AutoTyper-byGo-Setup.exe` from the [Releases Page](https://github.com/goutham-11-16/Auto-Typer/releases/latest).
+2.  Run the installer. It will create a desktop shortcut and start menu entry.
 
-> **Note:** Requires Windows 10 or 11.
+**Option 2: Portable**
+1.  Download the `.zip` or `.exe` (Self-Contained).
+2.  Run it directly. No install needed.
+
+> **System Requirements:** Windows 10 or Windows 11.
+
+---
+
+## 🗑️ Uninstalling
+
+*   Go to **Settings > Apps > Installed Apps**.
+*   Search for "Auto Typer".
+*   Click **Uninstall**.
+*   *(Note: This leaves your saved snippets intact in the `%AppData%` folder if you reinstall later!)*
 
 ---
 
