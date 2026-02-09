@@ -41,3 +41,4 @@ build_err.txt
 build_log_attempt.txt
 build_output*.log
 msbuild.log
+AutoTyper-byGo-Setup.exe

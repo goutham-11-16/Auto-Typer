@@ -24,10 +24,21 @@ public partial class App : System.Windows.Application
 
         try
         {
-            var mainWindow = new MainWindow();
-            this.MainWindow = mainWindow;
-            mainWindow.Show();
-            try { System.IO.File.AppendAllText("startup_log.txt", "MainWindow Show Called\n"); } catch { }
+            // ACCESS CONTROL CHECK
+            var accessWindow = new AutoTyper.Views.AccessWindow();
+            bool? authorized = accessWindow.ShowDialog();
+
+            if (authorized == true)
+            {
+                var mainWindow = new MainWindow();
+                this.MainWindow = mainWindow;
+                mainWindow.Show();
+                try { System.IO.File.AppendAllText("startup_log.txt", "MainWindow Show Called\n"); } catch { }
+            }
+            else
+            {
+                Shutdown();
+            }
         }
 
         catch (Exception ex)
