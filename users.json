@@ -1,3 +1,10 @@
 {
-    "users": []
+    "users": [
+        {
+            "device_id": "33922daa-c044-4501-8f9f-9f9786be9824",
+            "code": "Goutham",
+            "authenticated": true,
+            "notes": "Admin Access Granted"
+        }
+    ]
 }
