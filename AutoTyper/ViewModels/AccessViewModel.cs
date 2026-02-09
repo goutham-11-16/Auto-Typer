@@ -31,7 +31,7 @@ namespace AutoTyper.ViewModels
             _ = CheckAccessAsync();
         }
 
-        private string _deviceId;
+        private string _deviceId = string.Empty;
         public string DeviceId
         {
             get => _deviceId;
@@ -93,7 +93,7 @@ namespace AutoTyper.ViewModels
             set { _isPending = value; OnPropertyChanged(); }
         }
 
-        private string _username;
+        private string _username = string.Empty;
         public string Username
         {
             get => _username;
@@ -105,14 +105,14 @@ namespace AutoTyper.ViewModels
             }
         }
         
-        private string _updateMessage;
+        private string _updateMessage = string.Empty;
         public string UpdateMessage
         {
              get => _updateMessage;
              set { _updateMessage = value; OnPropertyChanged(); }
         }
         
-        private string _updateUrl;
+        private string _updateUrl = string.Empty;
         public string UpdateUrl
         {
              get => _updateUrl;
