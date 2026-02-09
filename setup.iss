@@ -3,7 +3,7 @@
 
 #define MyAppName "Auto Typer byGo"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "E Goutham Reddy"
+#define MyAppPublisher "by Go"
 #define MyAppURL "https://goutham-11-16.github.io/Auto-Typer/"
 #define MyAppExeName "AutoTyper-byGo.exe"
 

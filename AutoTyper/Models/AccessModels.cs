@@ -4,6 +4,15 @@ using System.Text.Json.Serialization;
 
 namespace AutoTyper.Models
 {
+    public class GlobalState
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("app_enabled")]
+        public bool AppEnabled { get; set; } = true;
+
+        [System.Text.Json.Serialization.JsonPropertyName("kill_message")]
+        public string KillMessage { get; set; } = "Application disabled.";
+    }
+
     public class RemoteConfig
     {
         [JsonPropertyName("users")]

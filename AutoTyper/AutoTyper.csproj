@@ -11,11 +11,11 @@
     
     <!-- Application Metadata -->
     <Version>1.0.0</Version>
-    <Authors>Goutham Reddy</Authors>
-    <Company>Goutham Reddy</Company>
+    <Authors>by Go</Authors>
+    <Company>by Go</Company>
     <Product>Auto Typer byGo</Product>
     <Description>A clean, offline Windows utility for typing saved text using hotkeys.</Description>
-    <Copyright>© 2026 Goutham Reddy</Copyright>
+    <Copyright>© 2026 by Go</Copyright>
     
     <!-- Build Configurations -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>

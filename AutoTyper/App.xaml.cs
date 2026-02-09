@@ -32,6 +32,7 @@ public partial class App : System.Windows.Application
             {
                 var mainWindow = new MainWindow();
                 this.MainWindow = mainWindow;
+                mainWindow.Closed += (s, args) => Shutdown(); // Explicitly shutdown when main window closes
                 mainWindow.Show();
                 try { System.IO.File.AppendAllText("startup_log.txt", "MainWindow Show Called\n"); } catch { }
             }

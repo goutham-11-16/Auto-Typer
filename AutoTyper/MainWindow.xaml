@@ -786,7 +786,7 @@
                                          <TextBlock Text="A clean, offline Windows utility for typing saved text using hotkeys." TextWrapping="Wrap" Foreground="{StaticResource TextDarkBrush}" Margin="0,0,0,20"/>
                                          
                                          <StackPanel Margin="0,0,0,20">
-                                            <TextBlock Text="Developed by Goutham Reddy" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextDarkBrush}"/>
+                                            <TextBlock Text="Developed by Go" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextDarkBrush}"/>
                                             <TextBlock Text="© 2026 All rights reserved." FontSize="11" Foreground="{StaticResource TextLightBrush}"/>
                                          </StackPanel>
                                          

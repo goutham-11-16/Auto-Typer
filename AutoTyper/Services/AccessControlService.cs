@@ -22,6 +22,7 @@ namespace AutoTyper.Services
         private string UsersUrl => $"https://raw.githubusercontent.com/{RepoOwner}/{RepoName}/{Branch}/users.json";
         private string RequestsUrl => $"https://raw.githubusercontent.com/{RepoOwner}/{RepoName}/{Branch}/requests.json";
         private string UpdateUrl => $"https://raw.githubusercontent.com/{RepoOwner}/{RepoName}/{Branch}/update.json";
+        private string GlobalStateUrl => $"https://raw.githubusercontent.com/{RepoOwner}/{RepoName}/{Branch}/global_state.json";
 
         // API URL for writing (Requests)
         // https://api.github.com/repos/{owner}/{repo}/contents/{path}
@@ -33,6 +34,35 @@ namespace AutoTyper.Services
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "AutoTyper-AccessControl");
             // If using a Personal Access Token for public repo reads (high rate limit) or writes:
             // _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "YOUR_TOKEN");
+        }
+
+        public async Task<bool> CheckInternetConnection()
+        {
+            try
+            {
+                // Simple HEAD request to a reliable host (Google DNS or GitHub)
+                using var client = new HttpClient();
+                client.Timeout = TimeSpan.FromSeconds(3); // Fast fail
+                var response = await client.GetAsync("https://www.google.com");
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<GlobalState?> GetGlobalStateAsync()
+        {
+            try
+            {
+                var json = await _httpClient.GetStringAsync(GlobalStateUrl);
+                return JsonSerializer.Deserialize<GlobalState>(json);
+            }
+            catch
+            {
+                return null; // Fail-fast will handle null as error
+            }
         }
 
         public async Task<RemoteConfig> GetUsersConfigAsync()
