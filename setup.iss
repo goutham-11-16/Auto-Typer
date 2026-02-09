@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Auto Typer byGo"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "by Go"
 #define MyAppURL "https://goutham-11-16.github.io/Auto-Typer/"
 #define MyAppExeName "AutoTyper-byGo.exe"
@@ -21,7 +21,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
 ; Remove the following line to run in administrative install mode (install for all users.)
 PrivilegesRequired=lowest
-OutputDir=.
+OutputDir=D:\project files
 OutputBaseFilename=AutoTyper-byGo-Setup
 Compression=lzma
 SolidCompression=yes
