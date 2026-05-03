@@ -95,6 +95,12 @@
       "requested_on": "2026-05-02T19:46:05.8711696Z",
       "status": "pending",
       "username": "wizi"
+    },
+    {
+      "device_id": "7a9a96f5-5f60-4cc2-9ae8-a9f6e52a4335",
+      "requested_on": "2026-05-03T09:26:22.2676158Z",
+      "status": "pending",
+      "username": "Voltaire"
     }
   ]
 }
