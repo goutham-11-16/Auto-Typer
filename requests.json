@@ -203,6 +203,12 @@
       "requested_on": "2026-06-02T20:07:55.9916705Z",
       "status": "pending",
       "username": "\u0440\u0430\u0440\u043E\u0432\u0432"
+    },
+    {
+      "device_id": "bef3f7bc-2eb0-47b4-ae02-b5b73ea1a39f",
+      "requested_on": "2026-06-03T12:55:17.3405509Z",
+      "status": "pending",
+      "username": "jurgens"
     }
   ]
 }
