@@ -257,6 +257,12 @@
       "requested_on": "2026-06-11T11:16:17.0791354Z",
       "status": "pending",
       "username": "q\u01B0e"
+    },
+    {
+      "device_id": "3cadb3bc-772c-4a33-bd25-2c18eeb69cbe",
+      "requested_on": "2026-06-12T10:40:15.016489Z",
+      "status": "pending",
+      "username": "wizardbaron"
     }
   ]
 }
