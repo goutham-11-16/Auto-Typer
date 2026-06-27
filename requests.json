@@ -329,6 +329,12 @@
       "requested_on": "2026-06-26T20:28:37.0128566Z",
       "status": "pending",
       "username": "legam"
+    },
+    {
+      "device_id": "3c239bfa-4874-4d4e-b394-58ba2207712f",
+      "requested_on": "2026-06-27T06:19:00.8357748Z",
+      "status": "pending",
+      "username": "JACR"
     }
   ]
 }
