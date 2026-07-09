@@ -377,6 +377,12 @@
       "requested_on": "2026-07-08T16:11:11.5864328Z",
       "status": "pending",
       "username": "boor"
+    },
+    {
+      "device_id": "cc7ef5af-c92f-46d6-b7cd-cae193b702a7",
+      "requested_on": "2026-07-09T11:26:57.1553873Z",
+      "status": "pending",
+      "username": "jk"
     }
   ]
 }
