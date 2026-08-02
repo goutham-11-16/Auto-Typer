@@ -539,6 +539,12 @@
       "requested_on": "2026-08-02T09:34:16.4830847Z",
       "status": "pending",
       "username": "Shigemi"
+    },
+    {
+      "device_id": "b9d63f99-b631-4d7c-82e0-3d514ca4b430",
+      "requested_on": "2026-08-02T11:54:21.6726929Z",
+      "status": "pending",
+      "username": "rix"
     }
   ]
 }
