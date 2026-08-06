@@ -569,6 +569,12 @@
       "requested_on": "2026-08-05T12:31:44.9307365Z",
       "status": "pending",
       "username": "sha256:cf4789df0021ebe4876e3b90d9a2a4e1cbc638b5ca2306795585c2b7bbefdd01"
+    },
+    {
+      "device_id": "5415517a-75f4-4289-aca0-07186f3f44b7",
+      "requested_on": "2026-08-06T05:57:36.4730581Z",
+      "status": "pending",
+      "username": "omen"
     }
   ]
 }
