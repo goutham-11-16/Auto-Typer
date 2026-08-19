@@ -683,6 +683,12 @@
       "requested_on": "2026-08-19T09:15:58.2944095Z",
       "status": "pending",
       "username": "hapis"
+    },
+    {
+      "device_id": "70860e20-90b8-44a4-b56f-5fcef3e019f8",
+      "requested_on": "2026-08-19T11:23:25.2723435Z",
+      "status": "pending",
+      "username": "julia"
     }
   ]
 }
