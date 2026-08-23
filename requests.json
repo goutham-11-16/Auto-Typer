@@ -701,6 +701,12 @@
       "requested_on": "2026-08-19T17:14:54.7271234Z",
       "status": "pending",
       "username": "admin"
+    },
+    {
+      "device_id": "8fdab884-a54e-4740-a39d-e5b926a05858",
+      "requested_on": "2026-08-23T21:19:17.1916583Z",
+      "status": "pending",
+      "username": "YanHwanLee"
     }
   ]
 }
