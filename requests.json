@@ -803,6 +803,12 @@
       "requested_on": "2026-09-01T05:13:11.3680834Z",
       "status": "pending",
       "username": "danie"
+    },
+    {
+      "device_id": "601d0df6-567e-4d14-bbf8-6a5ff6e9fefc",
+      "requested_on": "2026-08-31T22:37:32.9463809Z",
+      "status": "pending",
+      "username": "kokolokov"
     }
   ]
 }
