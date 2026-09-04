@@ -45,8 +45,10 @@ $widgetDir = Join-Path $ScriptDir "GameBarWidget"
 $mainCpp = Join-Path $widgetDir "main.cpp"
 $viewCpp = Join-Path $widgetDir "WidgetView.cpp"
 $ipcCpp = Join-Path $widgetDir "IpcClient.cpp"
-# Ensure any running widget process is stopped before linking
+# Ensure any running processes are stopped before build/linking
 Get-Process -Name "AutoTyperWidget" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Get-Process -Name "AutoTyper-byGo" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Milliseconds 200
 
 $compileCmd = "call `"$vcvars`" && cd /d `"$widgetDir`" && cl.exe /EHsc /std:c++17 /O2 /Fo:.\\ /I.\\generated main.cpp WidgetView.cpp IpcClient.cpp /Fe:AutoTyperWidget.exe WindowsApp.lib Shell32.lib User32.lib Advapi32.lib"
 cmd.exe /c $compileCmd
@@ -65,7 +67,11 @@ if (-not (Test-Path (Join-Path $widgetDir "AppxManifest.xml"))) {
 # Copy AutoTyper desktop binaries into GameBarWidget folder for FullTrust launcher & direct execution
 $desktopBinDir = Join-Path $ScriptDir "AutoTyper\bin\$Configuration\net8.0-windows\win-x64"
 if (Test-Path $desktopBinDir) {
-    Copy-Item (Join-Path $desktopBinDir "*") $widgetDir -Recurse -Force -ErrorAction SilentlyContinue
+    Get-Process -Name "AutoTyper-byGo" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 200
+    try {
+        Copy-Item (Join-Path $desktopBinDir "*") $widgetDir -Recurse -Force -ErrorAction SilentlyContinue
+    } catch {}
 }
 
 Write-Host "Xbox Game Bar Widget build succeeded." -ForegroundColor Green
