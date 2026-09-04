@@ -46,35 +46,47 @@ struct App : ApplicationT<App>
                         WIDGET_LOG(L"[App::OnActivated] IsLaunchActivation=" + std::to_wstring(widgetArgs.IsLaunchActivation()) + 
                                  L", AppExtensionId=" + std::wstring(widgetArgs.AppExtensionId().c_str()));
 
-                        auto rootFrame = Window::Current().Content().try_as<Frame>();
-                        if (!rootFrame)
+                        if (widgetArgs.IsLaunchActivation())
                         {
-                            rootFrame = Frame();
-                            Window::Current().Content(rootFrame);
-                        }
-
-                        m_widget = XboxGameBarWidget(widgetArgs, Window::Current().CoreWindow(), rootFrame);
-
-                        if (!m_view)
-                        {
-                            m_view = std::make_unique<WidgetView>(m_widget);
-                            auto page = Page();
-                            page.Content(m_view->GetRootElement());
-                            rootFrame.Content(page);
-                        }
-                        else
-                        {
-                            m_view->SetWidget(m_widget);
-                            if (!rootFrame.Content())
+                            auto rootFrame = Window::Current().Content().try_as<Frame>();
+                            if (!rootFrame)
                             {
+                                rootFrame = Frame();
+                                Window::Current().Content(rootFrame);
+                            }
+
+                            m_widget = XboxGameBarWidget(widgetArgs, Window::Current().CoreWindow(), rootFrame);
+
+                            if (!m_view)
+                            {
+                                m_view = std::make_unique<WidgetView>(m_widget);
                                 auto page = Page();
                                 page.Content(m_view->GetRootElement());
                                 rootFrame.Content(page);
                             }
-                        }
+                            else
+                            {
+                                m_view->SetWidget(m_widget);
+                                if (!rootFrame.Content())
+                                {
+                                    auto page = Page();
+                                    page.Content(m_view->GetRootElement());
+                                    rootFrame.Content(page);
+                                }
+                            }
 
-                        Window::Current().Activate();
-                        WIDGET_LOG(L"[App::OnActivated] Activation handled successfully.");
+                            Window::Current().Activate();
+                            WIDGET_LOG(L"[App::OnActivated] Initial launch activation handled successfully.");
+                        }
+                        else
+                        {
+                            if (m_view && m_widget)
+                            {
+                                m_view->SetWidget(m_widget);
+                            }
+                            Window::Current().Activate();
+                            WIDGET_LOG(L"[App::OnActivated] Subsequent activation handled.");
+                        }
                     }
                     else
                     {
@@ -153,7 +165,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
             WIDGET_LOG(L"[wWinMain] LoadLibraryW Microsoft.Gaming.XboxGameBar.dll failed: " + std::to_wstring(GetLastError()));
         }
 
-        init_apartment(apartment_type::single_threaded);
+        init_apartment();
         Application::Start([](auto&&) { make<App>(); });
         return 0;
     }
