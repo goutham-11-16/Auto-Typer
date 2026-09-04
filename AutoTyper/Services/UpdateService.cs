@@ -31,7 +31,30 @@ namespace AutoTyper.Services
         {
             try
             {
-                var json = await _httpClient.GetStringAsync(ManifestUrl);
+                string json;
+                try
+                {
+                    using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(3));
+                    json = await _httpClient.GetStringAsync(ManifestUrl, cts.Token);
+                }
+                catch
+                {
+                    var psi = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "curl.exe",
+                        Arguments = $"-s --max-time 3 \"{ManifestUrl}\"",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var proc = System.Diagnostics.Process.Start(psi);
+                    if (proc == null) return null;
+                    json = await proc.StandardOutput.ReadToEndAsync();
+                    await proc.WaitForExitAsync();
+                }
+
+                if (string.IsNullOrWhiteSpace(json)) return null;
+
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 var info = JsonSerializer.Deserialize<UpdateInfo>(json, options);
                 
@@ -44,7 +67,7 @@ namespace AutoTyper.Services
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Update check failed: {ex.Message}");
-                throw; // Rethrow to let ViewModel handle the error (e.g. show "Check failed")
+                return null;
             }
         }
 

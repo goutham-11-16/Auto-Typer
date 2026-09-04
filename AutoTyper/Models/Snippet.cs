@@ -12,7 +12,7 @@ namespace AutoTyper.Models
         public bool IsEnabled
         {
             get => _isEnabled;
-            set { _isEnabled = value; OnPropertyChanged(); OnPropertyChanged("", "HotKeyDisplay"); }
+            set { _isEnabled = value; OnPropertyChanged(); OnPropertyChanged(nameof(HotKeyDisplay)); }
         }
 
         private string _name = "New Snippet";
@@ -33,14 +33,14 @@ namespace AutoTyper.Models
         public ModifierKeys HotKeyModifiers
         {
             get => _hotKeyModifiers;
-            set { _hotKeyModifiers = value; OnPropertyChanged("", "HotKeyDisplay"); }
+            set { _hotKeyModifiers = value; OnPropertyChanged(); OnPropertyChanged(nameof(HotKeyDisplay)); }
         }
 
         private Key _hotKeyKey;
         public Key HotKeyKey
         {
             get => _hotKeyKey;
-            set { _hotKeyKey = value; OnPropertyChanged("", "HotKeyDisplay"); }
+            set { _hotKeyKey = value; OnPropertyChanged(); OnPropertyChanged(nameof(HotKeyDisplay)); }
         }
 
         private TypingMode _mode = TypingMode.HumanLike;
@@ -67,10 +67,9 @@ namespace AutoTyper.Models
         public string HotKeyDisplay => $"{HotKeyModifiers} + {HotKeyKey}";
 
         public event PropertyChangedEventHandler? PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string? name = null, string? otherProperty = null)
+        protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-            if (otherProperty != null) PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(otherProperty));
         }
 
         public Snippet Clone()

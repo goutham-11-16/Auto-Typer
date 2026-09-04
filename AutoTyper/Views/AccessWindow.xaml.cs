@@ -12,8 +12,14 @@ namespace AutoTyper.Views
             var viewModel = new AccessViewModel();
             viewModel.RequestClose += (s, e) => 
             {
-                DialogResult = true; // Signal success
-                Close();
+                Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        DialogResult = true;
+                    }
+                    catch { }
+                });
             };
             DataContext = viewModel;
         }

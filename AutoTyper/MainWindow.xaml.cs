@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Interop;
@@ -115,6 +115,7 @@ namespace AutoTyper
 
         protected override void OnClosing(CancelEventArgs e)
         {
+            try { System.IO.File.AppendAllText("startup_log.txt", $"MainWindow OnClosing called! isExplicitExit={_isExplicitExit}\n"); } catch { }
             if (!_isExplicitExit)
             {
                 // DISABLED TRAY CLOSE FOR VERIFICATION - Application will close normally
@@ -139,6 +140,21 @@ namespace AutoTyper
             }
 
             base.OnClosing(e);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            try
+            {
+                if (_notifyIcon != null)
+                {
+                    _notifyIcon.Visible = false;
+                    _notifyIcon.Dispose();
+                }
+            }
+            catch { }
+            Environment.Exit(0);
         }
 
         private void HotkeyBox_PreviewKeyDown(object sender, WPFKeyEventArgs e)

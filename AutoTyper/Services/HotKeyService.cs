@@ -62,7 +62,8 @@ namespace AutoTyper.Services
                 NativeMethods.UnregisterHotKey(_windowHandle, id);
             }
             _registry.Clear();
-            _currentId = 9000;
+            // Do NOT reset _currentId — monotonically increasing IDs prevent
+            // collisions with stale WM_HOTKEY messages still in the message queue.
         }
 
         private IntPtr HwndHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)

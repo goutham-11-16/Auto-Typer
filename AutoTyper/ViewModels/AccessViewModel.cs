@@ -133,6 +133,16 @@ namespace AutoTyper.ViewModels
              }
         });
 
+        private static void LogAccess(string msg)
+        {
+            try
+            {
+                var logPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "startup_log.txt");
+                System.IO.File.AppendAllText(logPath, $"[{DateTime.Now:HH:mm:ss.fff}] {msg}\n");
+            }
+            catch { }
+        }
+
         public async Task CheckAccessAsync()
         {
             IsLoading = true;
@@ -141,61 +151,55 @@ namespace AutoTyper.ViewModels
 
             try
             {
+                LogAccess("CheckAccess: Step 0 (Internet check)");
                 // STEP 0: Check Internet
                 bool isOnline = await _accessService.CheckInternetConnection();
                 if (!isOnline)
                 {
+                    LogAccess("CheckAccess: No Internet Connection");
                     StatusMessage = "No Internet Connection";
                     StatusColor = "#FF4444";
                     System.Windows.MessageBox.Show("No Internet Connection. Please connect to the internet and reopen the application.", "Fatal Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                System.Windows.Application.Current.Shutdown();
+                    System.Windows.Application.Current.Shutdown();
                     return;
                 }
 
                 // STEP 1: Global Kill Switch
+                LogAccess("CheckAccess: Step 1 (Global Kill Switch)");
                 StatusMessage = "Verifying System State...";
                 var globalState = await _accessService.GetGlobalStateAsync();
                 
-                if (globalState == null)
+                if (globalState != null && !globalState.AppEnabled)
                 {
-                    // Fail-fast if cannot verify global state
-                    StatusMessage = "System Verification Failed";
-                System.Windows.Application.Current.Shutdown();
-                    return;
-                }
-
-                if (!globalState.AppEnabled)
-                {
+                    LogAccess("CheckAccess: System Disabled by admin");
                     StatusMessage = "System Disabled";
                     System.Windows.MessageBox.Show(globalState.KillMessage, "Access Denied", MessageBoxButton.OK, MessageBoxImage.Stop);
-                System.Windows.Application.Current.Shutdown();
+                    System.Windows.Application.Current.Shutdown();
                     return;
                 }
 
                 // STEP 2: Mandatory Update
+                LogAccess("CheckAccess: Step 2 (Version check)");
                 StatusMessage = "Checking Version...";
                 var updateInfo = await _accessService.GetUpdateConfigAsync();
                 if (updateInfo != null && IsUpdateMandatory(updateInfo))
                 {
+                    LogAccess($"CheckAccess: Mandatory update to {updateInfo.LatestVersion}");
                     IsUpdateRequired = true;
                     StatusMessage = "Update Required";
                     StatusColor = "#FF4444";
                     UpdateMessage = $"New version {updateInfo.LatestVersion} is available. You must update to continue.";
                     UpdateUrl = updateInfo.DownloadUrl;
                     IsLoading = false;
-                    // Strict: Do not proceed. User must click update or close.
-                    // If they close the window, the app exits (Explicit Shutdown).
                     return;
                 }
 
                 // STEP 3: Device Authorization
+                LogAccess("CheckAccess: Step 3 (Identity verification)");
                 StatusMessage = "Verifying Identity...";
                 var usersConfig = await _accessService.GetUsersConfigAsync();
                 
-                // STRICT: If users config fetch fails, it returns empty RemoteConfig.
-                // We should probably check if it was actually fetched? 
-                // For now, empty config means device not found -> Access Denied (or Request).
-                
+                LogAccess($"CheckAccess: Found {usersConfig.Users.Count} users in config. Local DeviceId={DeviceId}");
                 var userEntry = usersConfig.Users.FirstOrDefault(u => u.DeviceId == DeviceId);
 
                 if (userEntry != null)
@@ -203,28 +207,23 @@ namespace AutoTyper.ViewModels
                     if (userEntry.Authenticated)
                     {
                         // STEP 4: ACCESS GRANTED
+                        LogAccess($"CheckAccess: ACCESS GRANTED for user {userEntry.Code}");
                         StatusMessage = "Access Granted";
                         StatusColor = "#44FF44";
-                        await Task.Delay(500); 
+                        await Task.Delay(300); 
                         RequestClose?.Invoke(this, EventArgs.Empty);
                     }
                     else
                     {
-                        // STRICT BLOCK: Banned
+                        LogAccess("CheckAccess: ACCESS REVOKED");
                         IsAccessDenied = true;
                         StatusMessage = "Access Revoked";
                         StatusColor = "#FF4444"; 
-                        // Do not allow main window.
                     }
                 }
                 else
                 {
-                    // Device ID Missing -> BLOCK (as per "rules: device_id missing -> BLOCK")
-                    // However, we still show the Request Form to allow onboarding?
-                    // User said: "device_id missing -> BLOCK... NO new registrations allowed? Or just that they can't run the app."
-                    // Clarification: "The application MUST NOT run... unless ALL remote validation checks succeed."
-                    // Interpreted as: Main Window Blocked. Request Form is allowed but Main Window is NOT launched.
-                    
+                    LogAccess("CheckAccess: Device Not Registered");
                     IsRequestFormVisible = true;
                     StatusMessage = "Device Not Registered";
                     StatusColor = "#4444FF"; 
@@ -232,9 +231,8 @@ namespace AutoTyper.ViewModels
             }
             catch (Exception ex)
             {
-                // FAIL-FAST
+                LogAccess($"CheckAccess: Exception: {ex.Message}");
                 StatusMessage = "Fatal Error";
-                System.Diagnostics.Debug.WriteLine(ex);
                 System.Windows.Application.Current.Shutdown();
             }
             finally

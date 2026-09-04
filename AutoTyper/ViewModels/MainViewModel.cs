@@ -19,7 +19,28 @@ namespace AutoTyper.ViewModels
         private readonly StorageService _storageService;
         private readonly InputService _inputService;
         private readonly HotkeyValidationService _hotkeyValidationService;
-        private CancellationTokenSource _typingCts;
+        private readonly IpcServerService _ipcServerService;
+        private CancellationTokenSource? _typingCts;
+        private string _currentExecutionState = "Ready";
+        private int _currentProgress = 0;
+        private int _currentTotal = 0;
+        private string? _activeSnippetName = null;
+
+        /// <summary>
+        /// Safely runs a Task without observing it inline. Catches and logs any exceptions
+        /// to prevent unobserved Task exceptions from crashing the process.
+        /// </summary>
+        private static async void SafeFireAndForget(Task task)
+        {
+            try
+            {
+                await task;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SafeFireAndForget] Error: {ex.Message}");
+            }
+        }
 
         public MainViewModel()
         {
@@ -27,6 +48,8 @@ namespace AutoTyper.ViewModels
             _storageService = new StorageService();
             _inputService = new InputService();
             _hotkeyValidationService = new HotkeyValidationService();
+            _ipcServerService = new IpcServerService();
+            _ipcServerService.OnCommandReceived = HandleIpcCommandAsync;
 
             Snippets = new ObservableCollection<Snippet>(_storageService.LoadSnippets());
             
@@ -67,7 +90,7 @@ namespace AutoTyper.ViewModels
 
             // Update System Init
             _updateService = new UpdateService();
-            CheckForUpdatesCommand = new RelayCommand(async o => await CheckForUpdates());
+            CheckForUpdatesCommand = new RelayCommand(async o => await CheckForUpdates(true));
             OpenUpdatePageCommand = new RelayCommand(OpenUpdatePage);
             DismissUpdateCommand = new RelayCommand(o => IsUpdateOverlayVisible = false);
             // TestSnippetCommand removed
@@ -77,7 +100,7 @@ namespace AutoTyper.ViewModels
         // TestSnippet method removed as per cleanup
 
         
-        private async Task CheckForUpdates()
+        private async Task CheckForUpdates(bool isManual = false)
         {
             try 
             {
@@ -87,14 +110,17 @@ namespace AutoTyper.ViewModels
                     UpdateAvailable = update;
                     IsUpdateOverlayVisible = true;
                 }
-                else
+                else if (isManual)
                 {
                     System.Windows.MessageBox.Show("You are using the latest version.", "Auto Typer", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             }
             catch
             {
-                System.Windows.MessageBox.Show("Failed to check for updates. Please check your internet connection.", "Update Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                if (isManual)
+                {
+                    System.Windows.MessageBox.Show("Failed to check for updates. Please check your internet connection.", "Update Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+                }
             }
         }
 
@@ -399,14 +425,34 @@ namespace AutoTyper.ViewModels
 
         public void Initialize(IntPtr windowHandle)
         {
+            try
+            {
+                var logPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "Auto Typer byGo", "startup_log.txt");
+                System.IO.File.AppendAllText(logPath, $"[{DateTime.Now:HH:mm:ss.fff}] [MainViewModel] Initialize called. EnableGameBarIpc={_currentSettings.EnableGameBarIpc}\n");
+            }
+            catch { }
+
             _hotKeyService.Initialize(windowHandle);
             RegisterAllHotKeys();
-            _ = CheckForUpdates();
+            if (_currentSettings.EnableGameBarIpc)
+            {
+                _ipcServerService.Start();
+            }
+            SafeFireAndForget(CheckForUpdates());
         }
 
         private void RegisterAllHotKeys()
         {
             _hotKeyService.UnregisterAll();
+
+            // Register emergency stop global hotkey
+            if (_currentSettings.EmergencyStopHotkeyKey != Key.None)
+            {
+                _hotKeyService.Register(_currentSettings.EmergencyStopHotkeyModifiers, _currentSettings.EmergencyStopHotkeyKey, () =>
+                {
+                    StopTyping("Emergency stop triggered via global hotkey");
+                });
+            }
             
             // We register the "Committed" snippets, not the editable one
             foreach (var snippet in Snippets)
@@ -425,7 +471,18 @@ namespace AutoTyper.ViewModels
             }
         }
 
-        private async void ExecuteSnippet(Snippet snippet)
+        private void ExecuteSnippet(Snippet snippet)
+        {
+            if (IsPaused) return;
+
+            // Always fetch the freshest instance from Snippets collection by ID
+            var current = Snippets.FirstOrDefault(s => string.Equals(s.Id, snippet.Id, StringComparison.OrdinalIgnoreCase)) ?? snippet;
+            string textToType = current.Text;
+
+            SafeFireAndForget(ExecuteTypingOperationAsync(textToType, current.Mode, current.DelayPerChar, current.DelayPerWord, 0, current.Id));
+        }
+
+        public async Task ExecuteTypingOperationAsync(string text, TypingMode mode, int delayPerChar, int delayPerWord, int countdown, string? snippetId)
         {
             if (IsPaused) return;
 
@@ -437,26 +494,437 @@ namespace AutoTyper.ViewModels
             }
 
             _typingCts = new CancellationTokenSource();
+            var token = _typingCts.Token;
+
+            _activeSnippetName = snippetId != null ? Snippets.FirstOrDefault(s => s.Id == snippetId)?.Name : "Custom Text";
+            _currentTotal = text.Length;
+            _currentProgress = 0;
 
             try
             {
-                // We pass 0 for startIndex and null for progress since Resume is removed
-                await _inputService.TypeTextAsync(snippet.Text, snippet.Mode, snippet.DelayPerChar, snippet.DelayPerWord, _typingCts.Token, 0, null);
+                if (countdown > 0)
+                {
+                    _currentExecutionState = "Countdown";
+                    for (int sec = countdown; sec > 0; sec--)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        await _ipcServerService.BroadcastAsync(new IpcResponse
+                        {
+                            Type = "STATE_CHANGED",
+                            State = "Countdown",
+                            Countdown = sec,
+                            Total = _currentTotal,
+                            Progress = 0,
+                            ActiveSnippet = _activeSnippetName
+                        });
+                        await Task.Delay(1000, token);
+                    }
+                }
+
+                token.ThrowIfCancellationRequested();
+                _currentExecutionState = "Typing";
+                await _ipcServerService.BroadcastAsync(new IpcResponse
+                {
+                    Type = "STATE_CHANGED",
+                    State = "Typing",
+                    Total = _currentTotal,
+                    Progress = 0,
+                    ActiveSnippet = _activeSnippetName
+                });
+
+                var progress = new Progress<int>(p =>
+                {
+                    _currentProgress = p;
+                    SafeFireAndForget(_ipcServerService.BroadcastAsync(new IpcResponse
+                    {
+                        Type = "STATE_CHANGED",
+                        State = "Typing",
+                        Progress = p,
+                        Total = _currentTotal,
+                        ActiveSnippet = _activeSnippetName
+                    }));
+                });
+
+                await _inputService.TypeTextAsync(text, mode, delayPerChar, delayPerWord, token, 0, progress);
+
+                _currentExecutionState = "Ready";
+                _currentProgress = _currentTotal;
+                await _ipcServerService.BroadcastAsync(new IpcResponse
+                {
+                    Type = "STATE_CHANGED",
+                    State = "Ready",
+                    Progress = _currentTotal,
+                    Total = _currentTotal,
+                    Message = "Typing completed successfully"
+                });
             }
             catch (OperationCanceledException)
             {
-                // Typing cancelled
+                _currentExecutionState = "Stopped";
+                await _ipcServerService.BroadcastAsync(new IpcResponse
+                {
+                    Type = "STATE_CHANGED",
+                    State = "Stopped",
+                    Progress = _currentProgress,
+                    Total = _currentTotal,
+                    Message = "Typing was stopped"
+                });
             }
-            finally
+            catch (Exception ex)
             {
-                 if (_typingCts != null && !_typingCts.IsCancellationRequested)
-                 {
-                     // Cleanup if finished naturally
-                 }
+                _currentExecutionState = "Error";
+                await _ipcServerService.BroadcastAsync(new IpcResponse
+                {
+                    Type = "ERROR",
+                    State = "Error",
+                    Success = false,
+                    Message = ex.Message
+                });
             }
         }
 
-        
+        public void StopTyping(string? reason = null)
+        {
+            if (_typingCts != null)
+            {
+                try { _typingCts.Cancel(); } catch { }
+            }
+            _currentExecutionState = "Stopped";
+            SafeFireAndForget(_ipcServerService.BroadcastAsync(new IpcResponse
+            {
+                Type = "STATE_CHANGED",
+                State = "Stopped",
+                Message = reason ?? "Stopped"
+            }));
+        }
+
+        private async Task<IpcResponse> HandleIpcCommandAsync(IpcCommand command)
+        {
+            switch (command.Command?.ToUpperInvariant())
+            {
+                case "STATUS":
+                    return CreateCurrentStatusResponse();
+
+                case "GET_SNIPPETS":
+                    return new IpcResponse
+                    {
+                        Type = "STATUS",
+                        Success = true,
+                        State = _currentExecutionState,
+                        ActiveSnippet = SelectedSnippet?.Id ?? "",
+                        Snippets = GetSnippetDtos()
+                    };
+
+                case "GET_SETTINGS":
+                    return new IpcResponse
+                    {
+                        Type = "STATUS",
+                        Success = true,
+                        Mode = DefaultTypingMode.ToString(),
+                        DelayPerChar = DefaultDelay,
+                        DelayPerWord = DefaultDelay * 4
+                    };
+
+                case "SET_SPEED":
+                    if (command.DelayPerChar.HasValue)
+                    {
+                        DefaultDelay = command.DelayPerChar.Value;
+                    }
+                    return CreateCurrentStatusResponse();
+
+                case "LOAD_TEXT":
+                    if (!string.IsNullOrEmpty(command.Text))
+                    {
+                        await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                        {
+                            if (EditableSnippet != null)
+                            {
+                                EditableSnippet.Text = command.Text;
+                            }
+                            else
+                            {
+                                var snip = new Snippet { Name = "Game Bar Text", Text = command.Text, Mode = DefaultTypingMode };
+                                Snippets.Add(snip);
+                                SelectedSnippet = snip;
+                            }
+                        });
+                    }
+                    return CreateCurrentStatusResponse();
+
+                case "SAVE_SNIPPET":
+                    Snippet? savedSnippet = null;
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        Snippet? target = null;
+                        if (!string.IsNullOrEmpty(command.SnippetId))
+                        {
+                            target = Snippets.FirstOrDefault(s => string.Equals(s.Id, command.SnippetId, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (target == null && !string.IsNullOrEmpty(command.Hotkey))
+                        {
+                            target = Snippets.FirstOrDefault(s => s.HotKeyDisplay == command.Hotkey);
+                        }
+                        if (target == null)
+                        {
+                            target = new Snippet();
+                            Snippets.Add(target);
+                        }
+
+                        if (!string.IsNullOrEmpty(command.Name)) target.Name = command.Name;
+                        if (command.Text != null) target.Text = command.Text;
+                        if (!string.IsNullOrEmpty(command.Mode) && Enum.TryParse<TypingMode>(command.Mode, true, out var m)) target.Mode = m;
+                        if (command.DelayPerChar.HasValue) target.DelayPerChar = command.DelayPerChar.Value;
+                        if (command.DelayPerWord.HasValue) target.DelayPerWord = command.DelayPerWord.Value;
+
+                        if (!string.IsNullOrEmpty(command.Hotkey))
+                        {
+                            ParseAndAssignHotkey(target, command.Hotkey);
+                        }
+
+                        savedSnippet = target;
+
+                        // Synchronize desktop UI working copy
+                        if (SelectedSnippet == null || string.Equals(SelectedSnippet.Id, target.Id, StringComparison.OrdinalIgnoreCase))
+                        {
+                            if (_editableSnippet != null)
+                            {
+                                _editableSnippet.PropertyChanged -= EditableSnippet_PropertyChanged;
+                            }
+                            _selectedSnippet = target;
+                            OnPropertyChanged(nameof(SelectedSnippet));
+                            _editableSnippet = target.Clone();
+                            _editableSnippet.PropertyChanged += EditableSnippet_PropertyChanged;
+                            OnPropertyChanged(nameof(EditableSnippet));
+                            IsDirty = false;
+                            ValidateCurrentHotkey();
+                        }
+
+                        _storageService.SaveSnippets(Snippets.ToList());
+                        RegisterAllHotKeys();
+                    });
+
+                    var saveResp = new IpcResponse
+                    {
+                        Type = "SAVE_RESULT",
+                        Success = true,
+                        Message = "Snippet saved",
+                        ActiveSnippet = savedSnippet?.Id,
+                        Snippets = GetSnippetDtos()
+                    };
+                    return saveResp;
+
+                case "ADD_SNIPPET":
+                    Snippet? newSnippet = null;
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        newSnippet = new Snippet
+                        {
+                            Name = !string.IsNullOrEmpty(command.Name) ? command.Name : "New Snippet",
+                            Text = command.Text ?? "",
+                            Mode = !string.IsNullOrEmpty(command.Mode) && Enum.TryParse<TypingMode>(command.Mode, true, out var m) ? m : DefaultTypingMode,
+                            DelayPerChar = command.DelayPerChar ?? 1,
+                            DelayPerWord = command.DelayPerWord ?? 1
+                        };
+                        if (!string.IsNullOrEmpty(command.Hotkey))
+                        {
+                            ParseAndAssignHotkey(newSnippet, command.Hotkey);
+                        }
+                        Snippets.Add(newSnippet);
+                        _selectedSnippet = newSnippet;
+                        OnPropertyChanged(nameof(SelectedSnippet));
+                        EditableSnippet = newSnippet.Clone();
+                        IsDirty = false;
+                        ValidateCurrentHotkey();
+                        _storageService.SaveSnippets(Snippets.ToList());
+                        RegisterAllHotKeys();
+                    });
+
+                    var addResp = new IpcResponse
+                    {
+                        Type = "STATUS",
+                        Success = true,
+                        Message = "Snippet added",
+                        ActiveSnippet = newSnippet?.Id,
+                        Snippets = GetSnippetDtos()
+                    };
+                    return addResp;
+
+                case "DELETE_SNIPPET":
+                    await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                    {
+                        if (!string.IsNullOrEmpty(command.SnippetId))
+                        {
+                            var target = Snippets.FirstOrDefault(s => string.Equals(s.Id, command.SnippetId, StringComparison.OrdinalIgnoreCase));
+                            if (target != null)
+                            {
+                                Snippets.Remove(target);
+                                _storageService.SaveSnippets(Snippets.ToList());
+                                _selectedSnippet = Snippets.FirstOrDefault();
+                                OnPropertyChanged(nameof(SelectedSnippet));
+                                EditableSnippet = _selectedSnippet?.Clone();
+                                IsDirty = false;
+                                ValidateCurrentHotkey();
+                                RegisterAllHotKeys();
+                            }
+                        }
+                    });
+
+                    var delResp = new IpcResponse
+                    {
+                        Type = "STATUS",
+                        Success = true,
+                        Message = "Snippet deleted",
+                        ActiveSnippet = SelectedSnippet?.Id,
+                        Snippets = GetSnippetDtos()
+                    };
+                    return delResp;
+
+                case "START":
+                    Snippet? found = null;
+                    if (!string.IsNullOrEmpty(command.SnippetId))
+                    {
+                        found = Snippets.FirstOrDefault(s => s.Id == command.SnippetId);
+                    }
+
+                    // Prefer command.Text if non-empty, otherwise use snippet's text
+                    string textToType = !string.IsNullOrEmpty(command.Text)
+                        ? command.Text
+                        : (found?.Text ?? string.Empty);
+
+                    TypingMode mode = found?.Mode ?? DefaultTypingMode;
+                    if (!string.IsNullOrEmpty(command.Mode) && Enum.TryParse<TypingMode>(command.Mode, true, out var parsedMode))
+                    {
+                        mode = parsedMode;
+                    }
+
+                    int charDelay = command.DelayPerChar ?? (found?.DelayPerChar ?? DefaultDelay);
+                    int wordDelay = command.DelayPerWord ?? (found?.DelayPerWord ?? (charDelay * 4));
+                    int countdown = command.CountdownSeconds ?? 0;
+
+                    if (string.IsNullOrEmpty(textToType))
+                    {
+                        return new IpcResponse
+                        {
+                            Type = "ERROR",
+                            Success = false,
+                            Message = "No text provided to type"
+                        };
+                    }
+
+                    SafeFireAndForget(Task.Run(() => ExecuteTypingOperationAsync(textToType, mode, charDelay, wordDelay, countdown, command.SnippetId)));
+
+                    return new IpcResponse
+                    {
+                        Type = "STATE_CHANGED",
+                        Success = true,
+                        State = countdown > 0 ? "Countdown" : "Typing",
+                        Total = textToType.Length,
+                        Progress = 0,
+                        Countdown = countdown
+                    };
+
+                case "PAUSE":
+                    TogglePause(null);
+                    _currentExecutionState = IsPaused ? "Paused" : "Ready";
+                    SafeFireAndForget(_ipcServerService.BroadcastAsync(CreateCurrentStatusResponse()));
+                    return CreateCurrentStatusResponse();
+
+                case "RESUME":
+                    if (IsPaused)
+                    {
+                        TogglePause(null);
+                    }
+                    _currentExecutionState = IsPaused ? "Paused" : "Ready";
+                    SafeFireAndForget(_ipcServerService.BroadcastAsync(CreateCurrentStatusResponse()));
+                    return CreateCurrentStatusResponse();
+
+                case "STOP":
+                    StopTyping("Stopped via Game Bar");
+                    return CreateCurrentStatusResponse();
+
+                default:
+                    return new IpcResponse
+                    {
+                        Type = "ERROR",
+                        Success = false,
+                        Message = $"Unknown command: {command.Command}"
+                    };
+            }
+        }
+
+        private IpcResponse CreateCurrentStatusResponse()
+        {
+            return new IpcResponse
+            {
+                Type = "STATUS",
+                Success = true,
+                State = _currentExecutionState,
+                IsPaused = IsPaused,
+                ActiveSnippet = SelectedSnippet?.Id ?? "",
+                Mode = DefaultTypingMode.ToString(),
+                DelayPerChar = DefaultDelay,
+                DelayPerWord = DefaultDelay * 4,
+                Progress = _currentProgress,
+                Total = _currentTotal
+            };
+        }
+
+        private List<IpcSnippetDto> GetSnippetDtos()
+        {
+            var list = new List<IpcSnippetDto>();
+            foreach (var s in Snippets)
+            {
+                string hotkeyStr = s.HotKeyKey != Key.None ? $"{s.HotKeyModifiers} + {s.HotKeyKey}" : "";
+                list.Add(new IpcSnippetDto
+                {
+                    Id = s.Id,
+                    Name = s.Name,
+                    Text = s.Text,
+                    Mode = s.Mode.ToString(),
+                    DelayPerChar = s.DelayPerChar,
+                    DelayPerWord = s.DelayPerWord,
+                    Hotkey = hotkeyStr
+                });
+            }
+            return list;
+        }
+
+        private static void ParseAndAssignHotkey(Snippet snippet, string hotkeyStr)
+        {
+            if (string.IsNullOrWhiteSpace(hotkeyStr) || hotkeyStr.Equals("None", StringComparison.OrdinalIgnoreCase))
+            {
+                snippet.HotKeyKey = Key.None;
+                snippet.HotKeyModifiers = ModifierKeys.None;
+                return;
+            }
+
+            ModifierKeys modifiers = ModifierKeys.None;
+            Key key = Key.None;
+
+            var parts = hotkeyStr.Split(new[] { '+', ',' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var p in parts)
+            {
+                if (p.Equals("Control", StringComparison.OrdinalIgnoreCase) || p.Equals("Ctrl", StringComparison.OrdinalIgnoreCase))
+                    modifiers |= ModifierKeys.Control;
+                else if (p.Equals("Shift", StringComparison.OrdinalIgnoreCase))
+                    modifiers |= ModifierKeys.Shift;
+                else if (p.Equals("Alt", StringComparison.OrdinalIgnoreCase))
+                    modifiers |= ModifierKeys.Alt;
+                else if (p.Equals("Windows", StringComparison.OrdinalIgnoreCase) || p.Equals("Win", StringComparison.OrdinalIgnoreCase))
+                    modifiers |= ModifierKeys.Windows;
+                else
+                {
+                    if (Enum.TryParse<Key>(p, true, out var parsedKey))
+                    {
+                        key = parsedKey;
+                    }
+                }
+            }
+
+            snippet.HotKeyModifiers = modifiers;
+            snippet.HotKeyKey = key;
+        }
+
         public void HandleHotkeyInput(Key key, ModifierKeys modifiers)
         {
             if (EditableSnippet == null) return;
@@ -545,6 +1013,7 @@ namespace AutoTyper.ViewModels
 
             Snippets.Add(newSnippet);
             SelectedSnippet = newSnippet;
+            BroadcastSnippetsUpdated();
         }
 
         private void DuplicateSnippet(object obj)
@@ -563,6 +1032,7 @@ namespace AutoTyper.ViewModels
             };
             Snippets.Add(newSnippet);
             SelectedSnippet = newSnippet;
+            BroadcastSnippetsUpdated();
         }
 
         private void RemoveSnippet(object obj)
@@ -572,6 +1042,7 @@ namespace AutoTyper.ViewModels
                 Snippets.Remove(SelectedSnippet);
                 SelectedSnippet = null;
                 RegisterAllHotKeys();
+                BroadcastSnippetsUpdated();
             }
         }
 
@@ -583,6 +1054,20 @@ namespace AutoTyper.ViewModels
                 _storageService.SaveSnippets(Snippets.ToList());
                 RegisterAllHotKeys();
                 IsDirty = false;
+                BroadcastSnippetsUpdated();
+            }
+        }
+
+        private void BroadcastSnippetsUpdated()
+        {
+            if (_ipcServerService != null)
+            {
+                SafeFireAndForget(_ipcServerService.BroadcastAsync(new IpcResponse
+                {
+                    Type = "STATUS",
+                    Success = true,
+                    Snippets = GetSnippetDtos()
+                }));
             }
         }
         
@@ -646,6 +1131,7 @@ namespace AutoTyper.ViewModels
 
         private void Exit(object obj)
         {
+            _ipcServerService.Dispose();
             _hotKeyService.Dispose();
             System.Windows.Application.Current.Shutdown();
         }

@@ -30,25 +30,107 @@ namespace AutoTyper.Services
 
         public AccessControlService()
         {
-            _httpClient = new HttpClient();
+            var handler = new SocketsHttpHandler
+            {
+                ConnectTimeout = TimeSpan.FromSeconds(6),
+                ConnectCallback = async (context, cancellationToken) =>
+                {
+                    System.Net.IPAddress[] addresses;
+                    try
+                    {
+                        var entry = await System.Net.Dns.GetHostEntryAsync(context.DnsEndPoint.Host, System.Net.Sockets.AddressFamily.InterNetwork, cancellationToken);
+                        addresses = entry.AddressList;
+                    }
+                    catch
+                    {
+                        addresses = await System.Net.Dns.GetHostAddressesAsync(context.DnsEndPoint.Host, cancellationToken);
+                    }
+
+                    var ipv4Addresses = addresses.Where(a => a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).ToList();
+                    if (!ipv4Addresses.Any()) ipv4Addresses = addresses.ToList();
+
+                    foreach (var ip in ipv4Addresses)
+                    {
+                        try
+                        {
+                            var socket = new System.Net.Sockets.Socket(ip.AddressFamily, System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp);
+                            socket.NoDelay = true;
+                            using var timeoutCts = new System.Threading.CancellationTokenSource(1500);
+                            using var linkedCts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+                            await socket.ConnectAsync(new System.Net.IPEndPoint(ip, context.DnsEndPoint.Port), linkedCts.Token);
+                            return new System.Net.Sockets.NetworkStream(socket, ownsSocket: true);
+                        }
+                        catch
+                        {
+                            // Try next resolved IP
+                        }
+                    }
+
+                    throw new System.Net.Sockets.SocketException((int)System.Net.Sockets.SocketError.HostUnreachable);
+                }
+            };
+
+            _httpClient = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromSeconds(8)
+            };
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "AutoTyper-AccessControl");
-            // If using a Personal Access Token for public repo reads (high rate limit) or writes:
-            // _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "YOUR_TOKEN");
         }
 
         public async Task<bool> CheckInternetConnection()
         {
             try
             {
-                // Simple HEAD request to a reliable host (Google DNS or GitHub)
-                using var client = new HttpClient();
-                client.Timeout = TimeSpan.FromSeconds(3); // Fast fail
-                var response = await client.GetAsync("https://www.google.com");
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(4));
+                var response = await _httpClient.GetAsync("https://www.google.com", cts.Token);
                 return response.IsSuccessStatusCode;
             }
             catch
             {
-                return false;
+                // If google fails, try fallback to github
+                try
+                {
+                    using var cts2 = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(4));
+                    var resp2 = await _httpClient.GetAsync("https://github.com", cts2.Token);
+                    return resp2.IsSuccessStatusCode;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+        }
+
+        private async Task<string> FetchWithFallbackAsync(string url)
+        {
+            try
+            {
+                using var cts = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(5));
+                return await _httpClient.GetStringAsync(url, cts.Token);
+            }
+            catch
+            {
+                // Fallback via curl.exe if HttpClient encounters transient DNS/routing issues
+                try
+                {
+                    var psi = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "curl.exe",
+                        Arguments = $"-s --max-time 4 \"{url}\"",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    };
+                    using var proc = System.Diagnostics.Process.Start(psi);
+                    if (proc != null)
+                    {
+                        var output = await proc.StandardOutput.ReadToEndAsync();
+                        await proc.WaitForExitAsync();
+                        if (!string.IsNullOrWhiteSpace(output)) return output;
+                    }
+                }
+                catch { }
+                throw;
             }
         }
 
@@ -56,12 +138,12 @@ namespace AutoTyper.Services
         {
             try
             {
-                var json = await _httpClient.GetStringAsync(GlobalStateUrl);
+                var json = await FetchWithFallbackAsync(GlobalStateUrl);
                 return JsonSerializer.Deserialize<GlobalState>(json);
             }
             catch
             {
-                return null; // Fail-fast will handle null as error
+                return null;
             }
         }
 
@@ -69,13 +151,11 @@ namespace AutoTyper.Services
         {
             try
             {
-                var json = await _httpClient.GetStringAsync(UsersUrl);
+                var json = await FetchWithFallbackAsync(UsersUrl);
                 return JsonSerializer.Deserialize<RemoteConfig>(json) ?? new RemoteConfig();
             }
             catch (Exception)
             {
-                // Fallback or rethrow depending on strictness. 
-                // For security/control, failure to fetch = Access Denied usually.
                 return new RemoteConfig(); 
             }
         }
@@ -84,7 +164,7 @@ namespace AutoTyper.Services
         {
             try
             {
-                var json = await _httpClient.GetStringAsync(RequestsUrl);
+                var json = await FetchWithFallbackAsync(RequestsUrl);
                 return JsonSerializer.Deserialize<RequestLog>(json) ?? new RequestLog();
             }
             catch
@@ -97,7 +177,7 @@ namespace AutoTyper.Services
         {
             try
             {
-                var json = await _httpClient.GetStringAsync(UpdateUrl);
+                var json = await FetchWithFallbackAsync(UpdateUrl);
                 // Handle case-insensitive property matching for the existing update.json structure
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 return JsonSerializer.Deserialize<AppVersionInfo>(json, options);

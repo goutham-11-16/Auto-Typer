@@ -46,7 +46,6 @@ namespace AutoTyper.Services
                 }
             }, cancellationToken);
         }
-
         private async Task TypePasteAsync(string text)
         {
             string originalText = null;
@@ -70,9 +69,6 @@ namespace AutoTyper.Services
                 SendModifierKey(Key.LeftCtrl, false);
                 
                 await Task.Delay(100); 
-
-                // Optional: Restore clipboard? 
-                // Users might prefer the snippet to stay in clipboard.
             }
         }
 
