@@ -676,7 +676,7 @@ namespace AutoTyper.ViewModels
                         if (command.DelayPerChar.HasValue) target.DelayPerChar = command.DelayPerChar.Value;
                         if (command.DelayPerWord.HasValue) target.DelayPerWord = command.DelayPerWord.Value;
 
-                        if (!string.IsNullOrEmpty(command.Hotkey))
+                        if (command.Hotkey != null)
                         {
                             ParseAndAssignHotkey(target, command.Hotkey);
                         }
@@ -912,6 +912,12 @@ namespace AutoTyper.ViewModels
                     modifiers |= ModifierKeys.Alt;
                 else if (p.Equals("Windows", StringComparison.OrdinalIgnoreCase) || p.Equals("Win", StringComparison.OrdinalIgnoreCase))
                     modifiers |= ModifierKeys.Windows;
+                else if (p.Equals("Enter", StringComparison.OrdinalIgnoreCase) || p.Equals("Return", StringComparison.OrdinalIgnoreCase))
+                    key = Key.Return;
+                else if (p.Equals("Esc", StringComparison.OrdinalIgnoreCase) || p.Equals("Escape", StringComparison.OrdinalIgnoreCase))
+                    key = Key.Escape;
+                else if (p.Length == 1 && char.IsDigit(p[0]))
+                    key = (Key)((int)Key.D0 + (p[0] - '0'));
                 else
                 {
                     if (Enum.TryParse<Key>(p, true, out var parsedKey))

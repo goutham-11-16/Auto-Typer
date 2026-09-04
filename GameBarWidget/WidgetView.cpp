@@ -252,8 +252,91 @@ namespace AutoTyperWidget
             hotStack.Margin(Thickness{ 4, 0, 0, 0 });
             auto lblHot = TextBlock(); lblHot.Text(L"Hotkey Trigger"); lblHot.FontSize(11); lblHot.Foreground(SolidColorBrush(Color{ 180, 200, 200, 200 }));
             m_hotkeyBox = TextBox();
-            m_hotkeyBox.PlaceholderText(L"e.g. Control, Shift + X");
+            m_hotkeyBox.PlaceholderText(L"Click & press keys");
+            m_hotkeyBox.IsReadOnly(true);
             m_hotkeyBox.FontSize(12);
+
+            m_hotkeyBox.PreviewKeyDown([this](winrt::Windows::Foundation::IInspectable const&, winrt::Windows::UI::Xaml::Input::KeyRoutedEventArgs const& e) {
+                e.Handled(true);
+                try
+                {
+                    auto coreWin = winrt::Windows::UI::Core::CoreWindow::GetForCurrentThread();
+                    if (!coreWin) return;
+
+                    bool ctrl = (coreWin.GetKeyState(winrt::Windows::System::VirtualKey::Control) & winrt::Windows::UI::Core::CoreVirtualKeyStates::Down) == winrt::Windows::UI::Core::CoreVirtualKeyStates::Down;
+                    bool shift = (coreWin.GetKeyState(winrt::Windows::System::VirtualKey::Shift) & winrt::Windows::UI::Core::CoreVirtualKeyStates::Down) == winrt::Windows::UI::Core::CoreVirtualKeyStates::Down;
+                    bool alt = (coreWin.GetKeyState(winrt::Windows::System::VirtualKey::Menu) & winrt::Windows::UI::Core::CoreVirtualKeyStates::Down) == winrt::Windows::UI::Core::CoreVirtualKeyStates::Down;
+                    bool win = (coreWin.GetKeyState(winrt::Windows::System::VirtualKey::LeftWindows) & winrt::Windows::UI::Core::CoreVirtualKeyStates::Down) == winrt::Windows::UI::Core::CoreVirtualKeyStates::Down ||
+                               (coreWin.GetKeyState(winrt::Windows::System::VirtualKey::RightWindows) & winrt::Windows::UI::Core::CoreVirtualKeyStates::Down) == winrt::Windows::UI::Core::CoreVirtualKeyStates::Down;
+
+                    auto key = e.Key();
+                    if (key == winrt::Windows::System::VirtualKey::Control ||
+                        key == winrt::Windows::System::VirtualKey::Shift ||
+                        key == winrt::Windows::System::VirtualKey::Menu ||
+                        key == winrt::Windows::System::VirtualKey::LeftWindows ||
+                        key == winrt::Windows::System::VirtualKey::RightWindows)
+                    {
+                        return;
+                    }
+
+                    if (key == winrt::Windows::System::VirtualKey::Back ||
+                        key == winrt::Windows::System::VirtualKey::Delete ||
+                        key == winrt::Windows::System::VirtualKey::Escape)
+                    {
+                        m_hotkeyBox.Text(L"None");
+                        return;
+                    }
+
+                    std::wstring result = L"";
+                    if (ctrl) result += L"Control, ";
+                    if (shift) result += L"Shift, ";
+                    if (alt) result += L"Alt, ";
+                    if (win) result += L"Windows, ";
+
+                    if (!result.empty() && result.size() >= 2 && result.substr(result.size() - 2) == L", ")
+                    {
+                        result = result.substr(0, result.size() - 2) + L" + ";
+                    }
+
+                    std::wstring keyName;
+                    if (key >= winrt::Windows::System::VirtualKey::F1 && key <= winrt::Windows::System::VirtualKey::F24)
+                    {
+                        int fNum = static_cast<int>(key) - static_cast<int>(winrt::Windows::System::VirtualKey::F1) + 1;
+                        keyName = L"F" + std::to_wstring(fNum);
+                    }
+                    else if (key >= winrt::Windows::System::VirtualKey::Number0 && key <= winrt::Windows::System::VirtualKey::Number9)
+                    {
+                        wchar_t ch = L'0' + (static_cast<int>(key) - static_cast<int>(winrt::Windows::System::VirtualKey::Number0));
+                        keyName = L"D" + std::wstring(1, ch);
+                    }
+                    else if (key >= winrt::Windows::System::VirtualKey::NumberPad0 && key <= winrt::Windows::System::VirtualKey::NumberPad9)
+                    {
+                        wchar_t ch = L'0' + (static_cast<int>(key) - static_cast<int>(winrt::Windows::System::VirtualKey::NumberPad0));
+                        keyName = L"NumPad" + std::wstring(1, ch);
+                    }
+                    else if (key >= winrt::Windows::System::VirtualKey::A && key <= winrt::Windows::System::VirtualKey::Z)
+                    {
+                        wchar_t ch = L'A' + (static_cast<int>(key) - static_cast<int>(winrt::Windows::System::VirtualKey::A));
+                        keyName = std::wstring(1, ch);
+                    }
+                    else if (key == winrt::Windows::System::VirtualKey::Space) keyName = L"Space";
+                    else if (key == winrt::Windows::System::VirtualKey::Tab) keyName = L"Tab";
+                    else if (key == winrt::Windows::System::VirtualKey::Enter) keyName = L"Return";
+                    else if (key == winrt::Windows::System::VirtualKey::Insert) keyName = L"Insert";
+                    else if (key == winrt::Windows::System::VirtualKey::Home) keyName = L"Home";
+                    else if (key == winrt::Windows::System::VirtualKey::End) keyName = L"End";
+                    else if (key == winrt::Windows::System::VirtualKey::PageUp) keyName = L"PageUp";
+                    else if (key == winrt::Windows::System::VirtualKey::PageDown) keyName = L"PageDown";
+                    else
+                    {
+                        keyName = std::to_wstring(static_cast<int>(key));
+                    }
+
+                    result += keyName;
+                    m_hotkeyBox.Text(result);
+                }
+                catch (...) {}
+            });
             hotStack.Children().Append(lblHot);
             hotStack.Children().Append(m_hotkeyBox);
             Grid::SetColumn(hotStack, 1);
@@ -582,10 +665,7 @@ namespace AutoTyperWidget
                 m_statusText.Text(L"Disconnected");
                 m_connectBtn.Visibility(Visibility::Visible);
                 m_connectBtn.Content(box_value(L"Launch App"));
-                m_progressText.Text(L"Auto-Typer is starting... Connecting automatically.");
-
-                // Auto-launch the desktop app in the background
-                IpcClient::LaunchAutoTyperApp();
+                m_progressText.Text(L"Auto-Typer is offline. Click 'Launch App' to start.");
             }
         }
         catch (...) {}

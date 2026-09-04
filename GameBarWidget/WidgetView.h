@@ -15,6 +15,8 @@
 #include <winrt/Windows.UI.Xaml.Media.h>
 #include <winrt/Windows.UI.Xaml.Shapes.h>
 #include <winrt/Windows.Data.Json.h>
+#include <winrt/Windows.System.h>
+#include <winrt/Windows.UI.Xaml.Input.h>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
 #include "winrt/Microsoft.Gaming.XboxGameBar.h"
 
