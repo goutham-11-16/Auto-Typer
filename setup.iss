@@ -52,8 +52,8 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\AppModelUnlock"; ValueType: dword; ValueName: "AllowDevelopmentWithoutDevLicense"; ValueData: 1; Flags: noerror
 
 [Run]
-; Silently register Xbox Game Bar Widget with Windows and restart Game Bar overlay broker
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command ""Add-AppxPackage -Register '{app}\GameBarWidget\AppxManifest.xml' -ErrorAction SilentlyContinue; Get-Process GameBar, GameBarFTServer, XboxGameBarWidgets -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue"""; Flags: runhidden
+; Silently unregister any old version, register the new package, and restart Game Bar overlay broker
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command ""Get-AppxPackage AutoTyper.GameBarWidget -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction SilentlyContinue; Add-AppxPackage -Register '{app}\GameBarWidget\AppxManifest.xml' -ForceApplicationShutdown; Get-Process GameBar, GameBarFTServer, XboxGameBarWidgets -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue"""; Flags: runhidden
 ; Prompt to launch desktop app after setup completes
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
