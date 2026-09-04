@@ -1,9 +1,12 @@
 {
-    "latestVersion": "1.1.0",
+    "latestVersion": "1.2.0",
     "releasePage": "https://github.com/goutham-11-16/Auto-Typer/releases/latest",
     "changelog": [
-        "Initial Release",
-        "Manual Update Check System"
+        "Xbox Game Bar Widget Integration (Win + G overlay)",
+        "Custom Widget Icon & Fluent Dark Theme",
+        "Interactive Hotkey Trigger Capture in Widget",
+        "Auto-Typer Background Companion Service",
+        "All-In-One Setup Installer with Auto Widget Registration"
     ],
-    "mandatory": true
+    "mandatory": false
 }

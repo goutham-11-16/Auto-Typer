@@ -1,6 +1,6 @@
 ; Inno Setup Script for Auto Typer byGo & Xbox Game Bar Widget
 #define MyAppName "Auto Typer byGo"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.2.0"
 #define MyAppPublisher "by Go"
 #define MyAppURL "https://goutham-11-16.github.io/Auto-Typer/"
 #define MyAppExeName "AutoTyper-byGo.exe"
