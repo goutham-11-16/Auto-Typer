@@ -32,7 +32,13 @@
 "code": "Abhi",
       "authenticated": true,
 "notes" : "Admin Access Granted"  
-       }
+       },
+         { 
+"device_id": "ac4d5d6a-fc50-484d-9428-590904417bb9",
+"code": "rani",
+      "authenticated": true,
+"notes" : "Admin Access Granted"  
+         }
     ]
 }
   
