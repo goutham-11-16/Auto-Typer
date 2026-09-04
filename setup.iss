@@ -41,6 +41,8 @@ Source: "GameBarWidget\Microsoft.Gaming.XboxGameBar.dll"; DestDir: "{app}\GameBa
 Source: "GameBarWidget\Microsoft.Gaming.XboxGameBar.winmd"; DestDir: "{app}\GameBarWidget"; Flags: ignoreversion
 Source: "GameBarWidget\Assets\*"; DestDir: "{app}\GameBarWidget\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "GameBarWidget\lib\*"; DestDir: "{app}\GameBarWidget\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "GameBarWidget\resources*.pri"; DestDir: "{app}\GameBarWidget"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "Register-Widget.bat"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

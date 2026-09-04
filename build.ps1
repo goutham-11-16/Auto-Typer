@@ -74,6 +74,21 @@ if (Test-Path $desktopBinDir) {
     } catch {}
 }
 
+# Generate resources.pri using makepri.exe if available
+$makepri = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\makepri.exe"
+if (-not (Test-Path $makepri)) {
+    $foundPri = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin" -Recurse -Filter "makepri.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if ($foundPri) { $makepri = $foundPri.FullName }
+}
+if (Test-Path $makepri) {
+    $priconfig = Join-Path $widgetDir "priconfig.xml"
+    $priOut = Join-Path $widgetDir "resources.pri"
+    if (-not (Test-Path $priconfig)) {
+        & "$makepri" createconfig /cf "$priconfig" /dq en-US /o /pv 10.0.0 | Out-Null
+    }
+    & "$makepri" new /pr "$widgetDir" /cf "$priconfig" /of "$priOut" /o | Out-Null
+}
+
 Write-Host "Xbox Game Bar Widget build succeeded." -ForegroundColor Green
 
 # 3. Summary

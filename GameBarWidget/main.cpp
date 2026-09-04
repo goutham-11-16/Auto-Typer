@@ -153,7 +153,7 @@ int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
             WIDGET_LOG(L"[wWinMain] LoadLibraryW Microsoft.Gaming.XboxGameBar.dll failed: " + std::to_wstring(GetLastError()));
         }
 
-        init_apartment(apartment_type::multi_threaded);
+        init_apartment(apartment_type::single_threaded);
         Application::Start([](auto&&) { make<App>(); });
         return 0;
     }

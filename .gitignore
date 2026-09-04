@@ -68,4 +68,7 @@ GameBarWidget/tr/
 GameBarWidget/zh-Hans/
 GameBarWidget/zh-Hant/
 GameBarWidget/vcruntime140_cor3.dll
+GameBarWidget/*.pri
+!GameBarWidget/lib/*.pri
+GameBarWidget/priconfig.xml
 dist/
