@@ -182,6 +182,7 @@ int32_t __stdcall CustomActivationHandler(void* classId, winrt::guid const& iid,
     }
 
     // 2. Fallback to Microsoft.Gaming.XboxGameBar.dll directly for Game Bar SDK classes
+    WIDGET_LOG(L"[CustomActivationHandler] Falling back to Microsoft.Gaming.XboxGameBar.dll for class activation...");
     if (!g_hGameBarDll)
     {
         wchar_t exePath[MAX_PATH];
@@ -193,11 +194,13 @@ int32_t __stdcall CustomActivationHandler(void* classId, winrt::guid const& iid,
                 *(lastSlash + 1) = L'\0';
                 std::wstring dllPath = std::wstring(exePath) + L"Microsoft.Gaming.XboxGameBar.dll";
                 g_hGameBarDll = LoadLibraryW(dllPath.c_str());
+                WIDGET_LOG(L"[CustomActivationHandler] Attempted LoadLibraryW from exe dir: " + dllPath + L" result=" + (g_hGameBarDll ? L"SUCCESS" : L"FAILED"));
             }
         }
         if (!g_hGameBarDll)
         {
             g_hGameBarDll = LoadLibraryW(L"Microsoft.Gaming.XboxGameBar.dll");
+            WIDGET_LOG(L"[CustomActivationHandler] Attempted LoadLibraryW standard: result=" + std::wstring(g_hGameBarDll ? L"SUCCESS" : L"FAILED"));
         }
     }
 
@@ -206,18 +209,23 @@ int32_t __stdcall CustomActivationHandler(void* classId, winrt::guid const& iid,
         g_pfnDllGetActivationFactory = reinterpret_cast<int32_t(__stdcall*)(void*, void**)>(
             GetProcAddress(g_hGameBarDll, "DllGetActivationFactory")
         );
+        WIDGET_LOG(L"[CustomActivationHandler] GetProcAddress DllGetActivationFactory result=" + std::wstring(g_pfnDllGetActivationFactory ? L"SUCCESS" : L"FAILED"));
     }
 
     if (g_pfnDllGetActivationFactory)
     {
         winrt::com_ptr<winrt::Windows::Foundation::IActivationFactory> actFactory;
         int32_t hr = g_pfnDllGetActivationFactory(classId, actFactory.put_void());
+        WIDGET_LOG(L"[CustomActivationHandler] DllGetActivationFactory returned hr=" + std::to_wstring(hr));
         if (hr == 0 && actFactory)
         {
-            return actFactory.as(iid, factory);
+            int32_t qiRes = actFactory.as(iid, factory);
+            WIDGET_LOG(L"[CustomActivationHandler] actFactory.as(iid) returned hr=" + std::to_wstring(qiRes));
+            return qiRes;
         }
     }
 
+    WIDGET_LOG(L"[CustomActivationHandler] Activation failed, returning RO_E_METADATA_NAME_NOT_FOUND");
     return -2147483633; // RO_E_METADATA_NAME_NOT_FOUND (0x8000000F)
 }
 
