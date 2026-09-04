@@ -1,6 +1,8 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
+#include <unknwn.h>
+#include <winstring.h>
 #undef GetCurrentTime
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
@@ -156,76 +158,79 @@ static int32_t(__stdcall* g_pfnDllGetActivationFactory)(void*, void**) = nullptr
 
 int32_t __stdcall CustomActivationHandler(void* classId, winrt::guid const& iid, void** factory) noexcept
 {
+    if (!factory) return E_POINTER;
     *factory = nullptr;
 
-    // 1. Try standard RoGetActivationFactory for system Windows types (Windows.UI.Xaml.*, etc.)
-    static int32_t(__stdcall* s_pfnRoGet)(void*, winrt::guid const&, void**) = nullptr;
-    if (!s_pfnRoGet)
+    try
     {
-        HMODULE hComBase = GetModuleHandleW(L"combase.dll");
-        if (!hComBase) hComBase = LoadLibraryW(L"combase.dll");
-        if (hComBase)
-        {
-            s_pfnRoGet = reinterpret_cast<int32_t(__stdcall*)(void*, winrt::guid const&, void**)>(
-                GetProcAddress(hComBase, "RoGetActivationFactory")
-            );
-        }
-    }
+        HSTRING hstr = reinterpret_cast<HSTRING>(classId);
+        UINT32 len = 0;
+        PCWSTR nameBuf = WindowsGetStringRawBuffer(hstr, &len);
+        std::wstring className = (nameBuf && len > 0) ? std::wstring(nameBuf, len) : L"";
 
-    if (s_pfnRoGet)
-    {
-        int32_t hr = s_pfnRoGet(classId, iid, factory);
-        if (hr == 0 && *factory)
+        // If it is a Game Bar SDK class, route directly to Microsoft.Gaming.XboxGameBar.dll
+        if (!className.empty() && className.find(L"Microsoft.Gaming.XboxGameBar") != std::wstring::npos)
         {
-            return 0;
-        }
-    }
-
-    // 2. Fallback to Microsoft.Gaming.XboxGameBar.dll directly for Game Bar SDK classes
-    WIDGET_LOG(L"[CustomActivationHandler] Falling back to Microsoft.Gaming.XboxGameBar.dll for class activation...");
-    if (!g_hGameBarDll)
-    {
-        wchar_t exePath[MAX_PATH];
-        if (GetModuleFileNameW(NULL, exePath, MAX_PATH) > 0)
-        {
-            wchar_t* lastSlash = wcsrchr(exePath, L'\\');
-            if (lastSlash)
+            if (!g_hGameBarDll)
             {
-                *(lastSlash + 1) = L'\0';
-                std::wstring dllPath = std::wstring(exePath) + L"Microsoft.Gaming.XboxGameBar.dll";
-                g_hGameBarDll = LoadLibraryW(dllPath.c_str());
-                WIDGET_LOG(L"[CustomActivationHandler] Attempted LoadLibraryW from exe dir: " + dllPath + L" result=" + (g_hGameBarDll ? L"SUCCESS" : L"FAILED"));
+                wchar_t exePath[MAX_PATH];
+                if (GetModuleFileNameW(NULL, exePath, MAX_PATH) > 0)
+                {
+                    wchar_t* lastSlash = wcsrchr(exePath, L'\\');
+                    if (lastSlash)
+                    {
+                        *(lastSlash + 1) = L'\0';
+                        std::wstring dllPath = std::wstring(exePath) + L"Microsoft.Gaming.XboxGameBar.dll";
+                        g_hGameBarDll = LoadLibraryW(dllPath.c_str());
+                    }
+                }
+                if (!g_hGameBarDll)
+                {
+                    g_hGameBarDll = LoadLibraryW(L"Microsoft.Gaming.XboxGameBar.dll");
+                }
+            }
+
+            if (g_hGameBarDll && !g_pfnDllGetActivationFactory)
+            {
+                g_pfnDllGetActivationFactory = reinterpret_cast<int32_t(__stdcall*)(void*, void**)>(
+                    GetProcAddress(g_hGameBarDll, "DllGetActivationFactory")
+                );
+            }
+
+            if (g_pfnDllGetActivationFactory)
+            {
+                IUnknown* pUnk = nullptr;
+                int32_t hr = g_pfnDllGetActivationFactory(classId, reinterpret_cast<void**>(&pUnk));
+                if (hr == 0 && pUnk)
+                {
+                    hr = pUnk->QueryInterface(reinterpret_cast<GUID const&>(iid), factory);
+                    pUnk->Release();
+                    return hr;
+                }
             }
         }
-        if (!g_hGameBarDll)
+
+        // Standard Windows system types (Windows.UI.Xaml.*, etc.)
+        static int32_t(__stdcall* s_pfnRoGet)(void*, winrt::guid const&, void**) = nullptr;
+        if (!s_pfnRoGet)
         {
-            g_hGameBarDll = LoadLibraryW(L"Microsoft.Gaming.XboxGameBar.dll");
-            WIDGET_LOG(L"[CustomActivationHandler] Attempted LoadLibraryW standard: result=" + std::wstring(g_hGameBarDll ? L"SUCCESS" : L"FAILED"));
+            HMODULE hComBase = GetModuleHandleW(L"combase.dll");
+            if (!hComBase) hComBase = LoadLibraryW(L"combase.dll");
+            if (hComBase)
+            {
+                s_pfnRoGet = reinterpret_cast<int32_t(__stdcall*)(void*, winrt::guid const&, void**)>(
+                    GetProcAddress(hComBase, "RoGetActivationFactory")
+                );
+            }
+        }
+
+        if (s_pfnRoGet)
+        {
+            return s_pfnRoGet(classId, iid, factory);
         }
     }
+    catch (...) {}
 
-    if (g_hGameBarDll && !g_pfnDllGetActivationFactory)
-    {
-        g_pfnDllGetActivationFactory = reinterpret_cast<int32_t(__stdcall*)(void*, void**)>(
-            GetProcAddress(g_hGameBarDll, "DllGetActivationFactory")
-        );
-        WIDGET_LOG(L"[CustomActivationHandler] GetProcAddress DllGetActivationFactory result=" + std::wstring(g_pfnDllGetActivationFactory ? L"SUCCESS" : L"FAILED"));
-    }
-
-    if (g_pfnDllGetActivationFactory)
-    {
-        winrt::com_ptr<winrt::Windows::Foundation::IActivationFactory> actFactory;
-        int32_t hr = g_pfnDllGetActivationFactory(classId, actFactory.put_void());
-        WIDGET_LOG(L"[CustomActivationHandler] DllGetActivationFactory returned hr=" + std::to_wstring(hr));
-        if (hr == 0 && actFactory)
-        {
-            int32_t qiRes = actFactory.as(iid, factory);
-            WIDGET_LOG(L"[CustomActivationHandler] actFactory.as(iid) returned hr=" + std::to_wstring(qiRes));
-            return qiRes;
-        }
-    }
-
-    WIDGET_LOG(L"[CustomActivationHandler] Activation failed, returning RO_E_METADATA_NAME_NOT_FOUND");
     return -2147483633; // RO_E_METADATA_NAME_NOT_FOUND (0x8000000F)
 }
 
