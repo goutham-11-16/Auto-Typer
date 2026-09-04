@@ -51,7 +51,6 @@ namespace AutoTyperWidget
         void SetupGameBarEvents();
 
         // UI Event Handlers
-        void OnStartClicked(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::UI::Xaml::RoutedEventArgs const& e);
         void OnPauseClicked(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::UI::Xaml::RoutedEventArgs const& e);
         void OnStopClicked(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::UI::Xaml::RoutedEventArgs const& e);
         void OnSaveClicked(winrt::Windows::Foundation::IInspectable const& sender, winrt::Windows::UI::Xaml::RoutedEventArgs const& e);
@@ -104,8 +103,7 @@ namespace AutoTyperWidget
 
         // Actions
         winrt::Windows::UI::Xaml::Controls::Button m_saveBtn{ nullptr };
-        winrt::Windows::UI::Xaml::Controls::ComboBox m_countdownCombo{ nullptr };
-        winrt::Windows::UI::Xaml::Controls::Button m_startBtn{ nullptr };
+        winrt::Windows::UI::Xaml::Controls::Grid m_typingControlGrid{ nullptr };
         winrt::Windows::UI::Xaml::Controls::Button m_pauseBtn{ nullptr };
         winrt::Windows::UI::Xaml::Controls::Button m_stopBtn{ nullptr };
         winrt::Windows::UI::Xaml::Controls::ProgressBar m_progressBar{ nullptr };

@@ -82,6 +82,7 @@ namespace AutoTyperWidget
         BuildUi();
         SetupGameBarEvents();
         SetupIpc();
+        IpcClient::LaunchAutoTyperApp();
         WIDGET_LOG(L"[WidgetView::WidgetView] Constructor finished");
     }
 
@@ -382,85 +383,53 @@ namespace AutoTyperWidget
             stack.Children().Append(m_inputTextBox);
 
             // -------------------------------------------------------------
-            // Row 6: Save Snippet + Countdown Delay Row
+            // Row 6: Save Snippet Button (Full Width, Fluent Primary Accent)
             // -------------------------------------------------------------
-            auto saveCountGrid = Grid();
-            auto colSC0 = ColumnDefinition(); colSC0.Width(GridLength{ 1, GridUnitType::Star });
-            auto colSC1 = ColumnDefinition(); colSC1.Width(GridLength{ 1, GridUnitType::Star });
-            saveCountGrid.ColumnDefinitions().Append(colSC0);
-            saveCountGrid.ColumnDefinitions().Append(colSC1);
-
             m_saveBtn = Button();
             m_saveBtn.Content(box_value(L"Save Snippet"));
             m_saveBtn.HorizontalAlignment(HorizontalAlignment::Stretch);
             m_saveBtn.FontSize(12);
             m_saveBtn.FontWeight(Windows::UI::Text::FontWeights::SemiBold());
-            m_saveBtn.Background(SolidColorBrush(Color{ 255, 33, 150, 243 })); // Primary blue
+            m_saveBtn.Background(SolidColorBrush(Color{ 255, 0, 120, 215 })); // Fluent Blue
             m_saveBtn.Foreground(SolidColorBrush(Colors::White()));
-            m_saveBtn.Margin(Thickness{ 0, 0, 4, 0 });
+            m_saveBtn.Padding(Thickness{ 12, 6, 12, 6 });
+            m_saveBtn.Margin(Thickness{ 0, 4, 0, 2 });
             m_saveBtn.Click({ this, &WidgetView::OnSaveClicked });
-            Grid::SetColumn(m_saveBtn, 0);
-
-            m_countdownCombo = ComboBox();
-            m_countdownCombo.HorizontalAlignment(HorizontalAlignment::Stretch);
-            m_countdownCombo.FontSize(12);
-            m_countdownCombo.Items().Append(box_value(L"3s (Focus Target)"));
-            m_countdownCombo.Items().Append(box_value(L"2s Delay"));
-            m_countdownCombo.Items().Append(box_value(L"5s Delay"));
-            m_countdownCombo.Items().Append(box_value(L"Instant (0s)"));
-            m_countdownCombo.SelectedIndex(0);
-            m_countdownCombo.Margin(Thickness{ 4, 0, 0, 0 });
-            Grid::SetColumn(m_countdownCombo, 1);
-
-            saveCountGrid.Children().Append(m_saveBtn);
-            saveCountGrid.Children().Append(m_countdownCombo);
-            stack.Children().Append(saveCountGrid);
+            stack.Children().Append(m_saveBtn);
 
             // -------------------------------------------------------------
-            // Row 7: Action Controls (START TYPING, Pause, STOP)
+            // Row 7: Active Typing Session Controls (Pause & STOP, visible when typing)
             // -------------------------------------------------------------
-            auto actionGrid = Grid();
-            auto colA0 = ColumnDefinition(); colA0.Width(GridLength{ 2, GridUnitType::Star });
-            auto colA1 = ColumnDefinition(); colA1.Width(GridLength{ 1, GridUnitType::Star });
-            auto colA2 = ColumnDefinition(); colA2.Width(GridLength{ 1, GridUnitType::Star });
-            actionGrid.ColumnDefinitions().Append(colA0);
-            actionGrid.ColumnDefinitions().Append(colA1);
-            actionGrid.ColumnDefinitions().Append(colA2);
-
-            m_startBtn = Button();
-            m_startBtn.Content(box_value(L"START TYPING"));
-            m_startBtn.FontWeight(Windows::UI::Text::FontWeights::Bold());
-            m_startBtn.FontSize(12);
-            m_startBtn.HorizontalAlignment(HorizontalAlignment::Stretch);
-            m_startBtn.Background(SolidColorBrush(Color{ 255, 46, 125, 50 })); // Green
-            m_startBtn.Foreground(SolidColorBrush(Colors::White()));
-            m_startBtn.Margin(Thickness{ 0, 0, 3, 0 });
-            m_startBtn.Click({ this, &WidgetView::OnStartClicked });
-            Grid::SetColumn(m_startBtn, 0);
+            m_typingControlGrid = Grid();
+            auto colTG0 = ColumnDefinition(); colTG0.Width(GridLength{ 1, GridUnitType::Star });
+            auto colTG1 = ColumnDefinition(); colTG1.Width(GridLength{ 1, GridUnitType::Star });
+            m_typingControlGrid.ColumnDefinitions().Append(colTG0);
+            m_typingControlGrid.ColumnDefinitions().Append(colTG1);
+            m_typingControlGrid.Visibility(Visibility::Collapsed);
+            m_typingControlGrid.Margin(Thickness{ 0, 2, 0, 2 });
 
             m_pauseBtn = Button();
             m_pauseBtn.Content(box_value(L"Pause"));
-            m_pauseBtn.FontSize(12);
+            m_pauseBtn.FontSize(11);
             m_pauseBtn.HorizontalAlignment(HorizontalAlignment::Stretch);
-            m_pauseBtn.Margin(Thickness{ 3, 0, 3, 0 });
+            m_pauseBtn.Margin(Thickness{ 0, 0, 3, 0 });
             m_pauseBtn.Click({ this, &WidgetView::OnPauseClicked });
-            Grid::SetColumn(m_pauseBtn, 1);
+            Grid::SetColumn(m_pauseBtn, 0);
 
             m_stopBtn = Button();
             m_stopBtn.Content(box_value(L"STOP"));
             m_stopBtn.FontWeight(Windows::UI::Text::FontWeights::Bold());
-            m_stopBtn.FontSize(12);
+            m_stopBtn.FontSize(11);
             m_stopBtn.HorizontalAlignment(HorizontalAlignment::Stretch);
             m_stopBtn.Background(SolidColorBrush(Color{ 255, 198, 40, 40 })); // Red
             m_stopBtn.Foreground(SolidColorBrush(Colors::White()));
             m_stopBtn.Margin(Thickness{ 3, 0, 0, 0 });
             m_stopBtn.Click({ this, &WidgetView::OnStopClicked });
-            Grid::SetColumn(m_stopBtn, 2);
+            Grid::SetColumn(m_stopBtn, 1);
 
-            actionGrid.Children().Append(m_startBtn);
-            actionGrid.Children().Append(m_pauseBtn);
-            actionGrid.Children().Append(m_stopBtn);
-            stack.Children().Append(actionGrid);
+            m_typingControlGrid.Children().Append(m_pauseBtn);
+            m_typingControlGrid.Children().Append(m_stopBtn);
+            stack.Children().Append(m_typingControlGrid);
 
             // -------------------------------------------------------------
             // Row 8: Progress Bar & Status Text
@@ -473,7 +442,7 @@ namespace AutoTyperWidget
             stack.Children().Append(m_progressBar);
 
             m_progressText = TextBlock();
-            m_progressText.Text(L"Ready");
+            m_progressText.Text(L"Ready. Trigger your hotkey to type anywhere.");
             m_progressText.FontSize(11);
             m_progressText.Foreground(SolidColorBrush(Color{ 180, 200, 200, 200 }));
             stack.Children().Append(m_progressText);
@@ -681,12 +650,12 @@ namespace AutoTyperWidget
                     int cd = SafeJsonInt(root, L"countdown");
                     m_progressText.Text(L"Starting in " + to_hstring(cd) + L"s... Focus target input!");
                     m_isTyping = true;
-                    m_startBtn.IsEnabled(false);
+                    if (m_typingControlGrid) m_typingControlGrid.Visibility(Visibility::Visible);
                 }
                 else if (state == L"Typing")
                 {
                     m_isTyping = true;
-                    m_startBtn.IsEnabled(false);
+                    if (m_typingControlGrid) m_typingControlGrid.Visibility(Visibility::Visible);
 
                     int progress = SafeJsonInt(root, L"progress");
                     int total = SafeJsonInt(root, L"total", 1);
@@ -700,10 +669,10 @@ namespace AutoTyperWidget
                 else if (state == L"Ready" || state == L"Stopped")
                 {
                     m_isTyping = false;
-                    m_startBtn.IsEnabled(true);
+                    if (m_typingControlGrid) m_typingControlGrid.Visibility(Visibility::Collapsed);
                     m_progressBar.Value(0);
 
-                    std::wstring msg = SafeJsonString(root, L"message", L"Ready");
+                    std::wstring msg = SafeJsonString(root, L"message", L"Ready. Trigger hotkey to type.");
                     m_progressText.Text(msg);
                 }
             }
@@ -1027,60 +996,6 @@ namespace AutoTyperWidget
             std::wstring current = m_inputTextBox.Text().c_str();
             current += token;
             m_inputTextBox.Text(current);
-        }
-        catch (...) {}
-    }
-
-    void WidgetView::OnStartClicked(winrt::Windows::Foundation::IInspectable const&, RoutedEventArgs const&)
-    {
-        WIDGET_LOG(L"[WidgetView::OnStartClicked] Invoked");
-        try
-        {
-            if (!m_ipcClient || !m_ipcClient->IsConnected())
-            {
-                m_progressText.Text(L"Cannot type: Not connected to Auto-Typer byGo.");
-                return;
-            }
-
-            std::wstring text = m_inputTextBox.Text().c_str();
-            if (text.empty())
-            {
-                m_progressText.Text(L"Please enter or paste text to type.");
-                return;
-            }
-
-            std::wstring mode = L"HumanLike";
-            int modeIdx = m_modeCombo.SelectedIndex();
-            if (modeIdx == 1) mode = L"Paste";
-            else if (modeIdx == 2) mode = L"Fast";
-            else if (modeIdx == 3) mode = L"Macro";
-
-            int delayChar = 1;
-            int delayWord = 1;
-            try { delayChar = std::stoi(m_delayCharBox.Text().c_str()); } catch (...) {}
-            try { delayWord = std::stoi(m_delayWordBox.Text().c_str()); } catch (...) {}
-
-            int countdown = 3;
-            int cdIdx = m_countdownCombo.SelectedIndex();
-            if (cdIdx == 1) countdown = 2;
-            else if (cdIdx == 2) countdown = 5;
-            else if (cdIdx == 3) countdown = 0;
-
-            JsonObject cmd;
-            cmd.SetNamedValue(L"command", JsonValue::CreateStringValue(L"START"));
-            cmd.SetNamedValue(L"text", JsonValue::CreateStringValue(text));
-            cmd.SetNamedValue(L"mode", JsonValue::CreateStringValue(mode));
-            cmd.SetNamedValue(L"delayPerChar", JsonValue::CreateNumberValue(delayChar));
-            cmd.SetNamedValue(L"delayPerWord", JsonValue::CreateNumberValue(delayWord));
-            cmd.SetNamedValue(L"countdownSeconds", JsonValue::CreateNumberValue(countdown));
-
-            if (!m_currentSnippetId.empty())
-            {
-                cmd.SetNamedValue(L"snippetId", JsonValue::CreateStringValue(m_currentSnippetId));
-            }
-
-            std::string jsonStr = WideToUtf8(std::wstring(cmd.Stringify().c_str()));
-            m_ipcClient->SendCommand(jsonStr);
         }
         catch (...) {}
     }

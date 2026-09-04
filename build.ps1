@@ -62,6 +62,12 @@ if (-not (Test-Path (Join-Path $widgetDir "AppxManifest.xml"))) {
     Copy-Item (Join-Path $widgetDir "Package.appxmanifest") (Join-Path $widgetDir "AppxManifest.xml") -Force
 }
 
+# Copy AutoTyper desktop binaries into GameBarWidget folder for FullTrust launcher & direct execution
+$desktopBinDir = Join-Path $ScriptDir "AutoTyper\bin\$Configuration\net8.0-windows\win-x64"
+if (Test-Path $desktopBinDir) {
+    Copy-Item (Join-Path $desktopBinDir "*") $widgetDir -Recurse -Force -ErrorAction SilentlyContinue
+}
+
 Write-Host "Xbox Game Bar Widget build succeeded." -ForegroundColor Green
 
 # 3. Summary
