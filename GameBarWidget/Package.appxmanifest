@@ -81,29 +81,63 @@
         <ActivatableClass ActivatableClassId="Microsoft.Gaming.XboxGameBar.XboxGameBarWidgetControl" ThreadingModel="both" />
         <ActivatableClass ActivatableClassId="Microsoft.Gaming.XboxGameBar.XboxGameBarWidgetNotificationBuilder" ThreadingModel="both" />
         <ActivatableClass ActivatableClassId="Microsoft.Gaming.XboxGameBar.XboxGameBarWidgetNotificationManager" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Gaming.XboxGameBar.XboxGameBarAppTargetTracker" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Gaming.XboxGameBar.XboxGameBarForegroundWorker" ThreadingModel="both" />
+        <ActivatableClass ActivatableClassId="Microsoft.Gaming.XboxGameBar.Authentication.XboxGameBarWebAuthenticationBroker" ThreadingModel="both" />
       </InProcessServer>
     </Extension>
 
-    <!-- ProxyStub for Xbox Game Bar SDK Metadata-Based Marshaling -->
+    <!-- ProxyStub for Xbox Game Bar SDK Metadata-Based Marshaling (Public Interfaces) -->
     <Extension Category="windows.activatableClass.proxyStub">
       <ProxyStub ClassId="00000355-0000-0000-C000-000000000046">
         <Path>Microsoft.Gaming.XboxGameBar.winmd</Path>
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidget" InterfaceId="4DD56BE1-BA1D-44CF-81BB-B3A16A482303" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetActivatedEventArgs" InterfaceId="FD037AC2-5D3A-438D-BD53-88F0B6B0F399" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetFactory" InterfaceId="DC5B456B-99C8-43D8-BC9B-5A4D2283F89D" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetControl" InterfaceId="7CAC5173-0FC2-42F3-8BCE-9A13A4F7114D" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetControlFactory" InterfaceId="59411B0B-98BC-48B3-AC2C-4EDCF55891F1" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetActivity" InterfaceId="4CD83C3F-779B-4AE2-B80F-8D8F6211F733" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetActivityFactory" InterfaceId="ACA5C421-4423-4A43-AFBB-6582D170CAE6" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetCloseRequestedEventArgs" InterfaceId="9A648B1A-F09B-4AB5-A200-CF3BE0F167D4" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetNotification" InterfaceId="9AE1F320-D42C-4C4C-B6B9-198D69F700CC" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetNotificationBuilder" InterfaceId="37695B13-7275-43C6-AB8D-3E9F36138837" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetNotificationBuilderFactory" InterfaceId="68ADCFED-398E-4BD3-B01B-644B2F6855DB" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetNotificationManager" InterfaceId="4FD17874-FDCC-4EF9-8404-3C3F9987FCD9" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarWidgetNotificationManagerFactory" InterfaceId="53C0331A-4065-4529-858F-DCC20F5EF87F" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarAppTarget" InterfaceId="39F7D8EB-48CE-4CBD-B32E-359AC42E839E" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarAppTargetTracker" InterfaceId="A89148B3-6026-447F-A541-1B942572BD92" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarAppTargetTrackerFactory" InterfaceId="54A5F936-35F6-4A27-93C0-E932E62F8604" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarForegroundWorker" InterfaceId="FC40FA89-65EE-423B-99D5-F59A418CCDBF" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.IXboxGameBarForegroundWorkerFactory" InterfaceId="8381F7C4-5081-400B-9FE8-D16D49D76CE4" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.Input.IXboxGameBarHotkeyWatcher" InterfaceId="11719E2C-9B93-5C5C-9F8F-F9C63E8E671F" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.Input.IXboxGameBarHotkeyWatcherStatics" InterfaceId="16D2B9DB-2C15-581C-BE9E-8BDD67E8179A" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.Authentication.IXboxGameBarWebAuthenticationBroker" InterfaceId="80E11238-46B1-4819-B066-87D02F9D97CE" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.Authentication.IXboxGameBarWebAuthenticationBrokerFactory" InterfaceId="7110E041-E71A-4F84-B4BC-4652061BAE34" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.Authentication.IXboxGameBarWebAuthenticationResult" InterfaceId="36C11937-A464-4B61-815E-9FEC4B481446" />
+      </ProxyStub>
+    </Extension>
+
+    <!-- ProxyStub for Xbox Game Bar SDK Metadata-Based Marshaling (Private Host Interfaces) -->
+    <Extension Category="windows.activatableClass.proxyStub">
+      <ProxyStub ClassId="00000355-0000-0000-C000-000000000046">
+        <Path>Microsoft.Gaming.XboxGameBar.Private.winmd</Path>
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarAppTargetHost" InterfaceId="38CDC43C-0A0E-4B3B-BBD3-A581AE220D53" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarAppTargetInfo" InterfaceId="D7689E93-5587-47D1-A42E-78D16B2FA807" />
-        <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarActivityHost" InterfaceId="2B113C9B-E370-49B2-A20B-83E0F5737577" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarHotkeyManagerHost" InterfaceId="F6225A53-B34C-4833-9511-AA377B43316F" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarNavigationKeyCombo" InterfaceId="5EEA3DBF-09BB-42A5-B491-CF561E33C172" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetActivatedEventArgsPrivate" InterfaceId="782535A7-9407-4572-BFCB-316B4086F102" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetActivityHost" InterfaceId="2B113C9B-E370-49B2-A20B-83E0F5737577" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetAuthHost" InterfaceId="DC263529-B12F-469E-BB35-B94069F5B15A" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetControlHost" InterfaceId="C309CAC7-8435-4082-8F37-784523747047" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetForegroundWorkerHost" InterfaceId="DDB52B57-FA83-420C-AFDE-6FA556E18B83" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetForegroundWorkerPrivate" InterfaceId="42BACDFC-BB28-4E71-99B4-24C034C7B7E0" />
-        <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarNavigationKeyCombo" InterfaceId="5EEA3DBF-09BB-42A5-B491-CF561E33C172" />
-        <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetActivatedEventArgsPrivate" InterfaceId="782535A7-9407-4572-BFCB-316B4086F102" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetHost" InterfaceId="5D12BC93-212B-4B9F-9091-76B73BF56525" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetHost2" InterfaceId="28717C8B-D8E8-47A8-AF47-A1D5263BAE9B" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetHost3" InterfaceId="3F5A3F12-C1E4-4942-B80D-3117BC948E29" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetHost4" InterfaceId="FA696D9E-2501-4B01-B26F-4BB85344740F" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetHost5" InterfaceId="A6C878CC-2B08-4B94-B1C3-222C6A913F3C" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetHost6" InterfaceId="CE6F0D73-C44F-4BBD-9652-A0FC52C37A34" />
+        <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetHost7" InterfaceId="B7D246E1-F61B-43A2-9120-25D9AC31BB17" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetNotificationHost" InterfaceId="6F68D392-E4A9-46F7-A024-5275BC2FE7BA" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetNotificationPrivate" InterfaceId="C94C8DC8-C8B5-4560-AF6E-A588B558213A" />
         <Interface Name="Microsoft.Gaming.XboxGameBar.Private.IXboxGameBarWidgetPrivate" InterfaceId="22ABA97F-FB0F-4439-9BDD-2C67B2D5AA8F" />

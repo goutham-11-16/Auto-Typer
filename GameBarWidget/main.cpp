@@ -36,13 +36,29 @@ struct App : ApplicationT<App>
         WIDGET_LOG(L"[App::OnActivated] Start, Kind=" + std::to_wstring(static_cast<int>(e.Kind())));
         try
         {
+            auto rootFrame = Window::Current().Content().try_as<Frame>();
+            if (!rootFrame)
+            {
+                rootFrame = Frame();
+                Window::Current().Content(rootFrame);
+            }
+
             if (e.Kind() == ActivationKind::Protocol)
             {
                 auto proto = e.try_as<IProtocolActivatedEventArgs>();
                 if (proto && proto.Uri().SchemeName() == L"ms-gamebarwidget")
                 {
                     WIDGET_LOG(L"[App::OnActivated] Protocol ms-gamebarwidget, Uri=" + std::wstring(proto.Uri().RawUri().c_str()));
-                    auto widgetArgs = e.try_as<XboxGameBarWidgetActivatedEventArgs>();
+                    XboxGameBarWidgetActivatedEventArgs widgetArgs{ nullptr };
+                    try
+                    {
+                        widgetArgs = e.try_as<XboxGameBarWidgetActivatedEventArgs>();
+                    }
+                    catch (...)
+                    {
+                        WIDGET_LOG(L"[App::OnActivated] Exception querying XboxGameBarWidgetActivatedEventArgs");
+                    }
+
                     if (widgetArgs)
                     {
                         WIDGET_LOG(L"[App::OnActivated] IsLaunchActivation=" + std::to_wstring(widgetArgs.IsLaunchActivation()) + 
@@ -50,14 +66,20 @@ struct App : ApplicationT<App>
 
                         if (widgetArgs.IsLaunchActivation())
                         {
-                            auto rootFrame = Window::Current().Content().try_as<Frame>();
-                            if (!rootFrame)
+                            try
                             {
-                                rootFrame = Frame();
-                                Window::Current().Content(rootFrame);
+                                m_widget = XboxGameBarWidget(widgetArgs, Window::Current().CoreWindow(), rootFrame);
                             }
-
-                            m_widget = XboxGameBarWidget(widgetArgs, Window::Current().CoreWindow(), rootFrame);
+                            catch (winrt::hresult_error const& hr)
+                            {
+                                WIDGET_LOG(L"[App::OnActivated] XboxGameBarWidget constructor failed: 0x" + std::to_wstring(hr.code().value) + L" - " + std::wstring(hr.message().c_str()));
+                                m_widget = nullptr;
+                            }
+                            catch (...)
+                            {
+                                WIDGET_LOG(L"[App::OnActivated] XboxGameBarWidget constructor unknown exception");
+                                m_widget = nullptr;
+                            }
 
                             if (!m_view)
                             {
@@ -92,22 +114,72 @@ struct App : ApplicationT<App>
                     }
                     else
                     {
-                        WIDGET_LOG(L"[App::OnActivated] Failed to cast to XboxGameBarWidgetActivatedEventArgs");
+                        WIDGET_LOG(L"[App::OnActivated] widgetArgs null - performing fallback view initialization");
+                        if (!m_view)
+                        {
+                            m_view = std::make_unique<WidgetView>(nullptr);
+                            auto page = Page();
+                            page.Content(m_view->GetRootElement());
+                            rootFrame.Content(page);
+                        }
+                        Window::Current().Activate();
                     }
                 }
+                else
+                {
+                    if (!m_view)
+                    {
+                        m_view = std::make_unique<WidgetView>(nullptr);
+                        auto page = Page();
+                        page.Content(m_view->GetRootElement());
+                        rootFrame.Content(page);
+                    }
+                    Window::Current().Activate();
+                }
+            }
+            else
+            {
+                if (!m_view)
+                {
+                    m_view = std::make_unique<WidgetView>(nullptr);
+                    auto page = Page();
+                    page.Content(m_view->GetRootElement());
+                    rootFrame.Content(page);
+                }
+                Window::Current().Activate();
             }
         }
         catch (winrt::hresult_error const& hr)
         {
             WIDGET_LOG(L"[App::OnActivated] HRESULT Exception: 0x" + std::to_wstring(hr.code().value) + L" - " + std::wstring(hr.message().c_str()));
+            try
+            {
+                auto rootFrame = Window::Current().Content().try_as<Frame>();
+                if (!rootFrame)
+                {
+                    rootFrame = Frame();
+                    Window::Current().Content(rootFrame);
+                }
+                if (!m_view)
+                {
+                    m_view = std::make_unique<WidgetView>(nullptr);
+                    auto page = Page();
+                    page.Content(m_view->GetRootElement());
+                    rootFrame.Content(page);
+                }
+                Window::Current().Activate();
+            }
+            catch (...) {}
         }
         catch (std::exception const& ex)
         {
             WIDGET_LOG(std::wstring(L"[App::OnActivated] std::exception: ") + Utf8ToWide(ex.what()).c_str());
+            try { Window::Current().Activate(); } catch (...) {}
         }
         catch (...)
         {
             WIDGET_LOG(L"[App::OnActivated] Unknown exception caught!");
+            try { Window::Current().Activate(); } catch (...) {}
         }
     }
 

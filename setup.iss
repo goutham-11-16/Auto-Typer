@@ -37,8 +37,8 @@ Source: "AutoTyper\bin\Release\net8.0-windows\win-x64\publish\*"; DestDir: "{app
 ; 2. Xbox Game Bar Widget Package Files
 Source: "GameBarWidget\AutoTyperWidget.exe"; DestDir: "{app}\GameBarWidget"; Flags: ignoreversion
 Source: "GameBarWidget\AppxManifest.xml"; DestDir: "{app}\GameBarWidget"; Flags: ignoreversion
-Source: "GameBarWidget\Microsoft.Gaming.XboxGameBar.dll"; DestDir: "{app}\GameBarWidget"; Flags: ignoreversion
-Source: "GameBarWidget\Microsoft.Gaming.XboxGameBar.winmd"; DestDir: "{app}\GameBarWidget"; Flags: ignoreversion
+Source: "GameBarWidget\*.dll"; DestDir: "{app}\GameBarWidget"; Flags: ignoreversion
+Source: "GameBarWidget\*.winmd"; DestDir: "{app}\GameBarWidget"; Flags: ignoreversion
 Source: "GameBarWidget\Assets\*"; DestDir: "{app}\GameBarWidget\Assets"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "GameBarWidget\lib\*"; DestDir: "{app}\GameBarWidget\lib"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "GameBarWidget\resources*.pri"; DestDir: "{app}\GameBarWidget"; Flags: ignoreversion skipifsourcedoesntexist
