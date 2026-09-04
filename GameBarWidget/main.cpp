@@ -151,10 +151,82 @@ struct App : ApplicationT<App>
     }
 };
 
+static HMODULE g_hGameBarDll = nullptr;
+static int32_t(__stdcall* g_pfnDllGetActivationFactory)(void*, void**) = nullptr;
+
+int32_t __stdcall CustomActivationHandler(void* classId, winrt::guid const& iid, void** factory) noexcept
+{
+    *factory = nullptr;
+
+    // 1. Try standard RoGetActivationFactory for system Windows types (Windows.UI.Xaml.*, etc.)
+    static int32_t(__stdcall* s_pfnRoGet)(void*, winrt::guid const&, void**) = nullptr;
+    if (!s_pfnRoGet)
+    {
+        HMODULE hComBase = GetModuleHandleW(L"combase.dll");
+        if (!hComBase) hComBase = LoadLibraryW(L"combase.dll");
+        if (hComBase)
+        {
+            s_pfnRoGet = reinterpret_cast<int32_t(__stdcall*)(void*, winrt::guid const&, void**)>(
+                GetProcAddress(hComBase, "RoGetActivationFactory")
+            );
+        }
+    }
+
+    if (s_pfnRoGet)
+    {
+        int32_t hr = s_pfnRoGet(classId, iid, factory);
+        if (hr == 0 && *factory)
+        {
+            return 0;
+        }
+    }
+
+    // 2. Fallback to Microsoft.Gaming.XboxGameBar.dll directly for Game Bar SDK classes
+    if (!g_hGameBarDll)
+    {
+        wchar_t exePath[MAX_PATH];
+        if (GetModuleFileNameW(NULL, exePath, MAX_PATH) > 0)
+        {
+            wchar_t* lastSlash = wcsrchr(exePath, L'\\');
+            if (lastSlash)
+            {
+                *(lastSlash + 1) = L'\0';
+                std::wstring dllPath = std::wstring(exePath) + L"Microsoft.Gaming.XboxGameBar.dll";
+                g_hGameBarDll = LoadLibraryW(dllPath.c_str());
+            }
+        }
+        if (!g_hGameBarDll)
+        {
+            g_hGameBarDll = LoadLibraryW(L"Microsoft.Gaming.XboxGameBar.dll");
+        }
+    }
+
+    if (g_hGameBarDll && !g_pfnDllGetActivationFactory)
+    {
+        g_pfnDllGetActivationFactory = reinterpret_cast<int32_t(__stdcall*)(void*, void**)>(
+            GetProcAddress(g_hGameBarDll, "DllGetActivationFactory")
+        );
+    }
+
+    if (g_pfnDllGetActivationFactory)
+    {
+        winrt::com_ptr<winrt::Windows::Foundation::IActivationFactory> actFactory;
+        int32_t hr = g_pfnDllGetActivationFactory(classId, actFactory.put_void());
+        if (hr == 0 && actFactory)
+        {
+            return actFactory.as(iid, factory);
+        }
+    }
+
+    return -2147483633; // RO_E_METADATA_NAME_NOT_FOUND (0x8000000F)
+}
+
 int __stdcall wWinMain(HINSTANCE, HINSTANCE, PWSTR, int)
 {
     try
     {
+        winrt_activation_handler = CustomActivationHandler;
+
         HMODULE hDll = LoadLibraryW(L"Microsoft.Gaming.XboxGameBar.dll");
         if (hDll)
         {
