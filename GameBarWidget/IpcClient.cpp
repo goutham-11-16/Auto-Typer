@@ -5,6 +5,7 @@
 #include <iostream>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.System.h>
+#include <winrt/Windows.ApplicationModel.h>
 
 namespace AutoTyperWidget
 {
@@ -349,7 +350,22 @@ namespace AutoTyperWidget
         WIDGET_LOG(L"[IpcClient::LaunchAutoTyperApp] Attempting to launch Auto-Typer desktop application");
         try
         {
-            // 1. Launch via Windows protocol launcher (Works natively from UWP AppContainer!)
+            // 1. Launch via FullTrustProcessLauncher (Guaranteed method for packaged Win32 full-trust extension)
+            winrt::Windows::ApplicationModel::FullTrustProcessLauncher::LaunchFullTrustProcessForCurrentAppAsync();
+            WIDGET_LOG(L"[IpcClient::LaunchAutoTyperApp] LaunchFullTrustProcessForCurrentAppAsync called");
+        }
+        catch (const std::exception& ex)
+        {
+            WIDGET_LOG(L"[IpcClient::LaunchAutoTyperApp] FullTrustProcessLauncher failed: " + std::wstring(ex.what(), ex.what() + strlen(ex.what())));
+        }
+        catch (...)
+        {
+            WIDGET_LOG(L"[IpcClient::LaunchAutoTyperApp] FullTrustProcessLauncher exception");
+        }
+
+        try
+        {
+            // 2. Launch via Windows protocol launcher (Works natively from UWP AppContainer!)
             winrt::Windows::Foundation::Uri uri(L"autotyper:start");
             winrt::Windows::System::Launcher::LaunchUriAsync(uri);
             WIDGET_LOG(L"[IpcClient::LaunchAutoTyperApp] LaunchUriAsync called for autotyper:start");
