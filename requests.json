@@ -893,6 +893,12 @@
       "requested_on": "2026-09-10T11:57:32.7651192Z",
       "status": "pending",
       "username": "wyftin"
+    },
+    {
+      "device_id": "9ef7a5c4-af34-41a4-82ba-2a2604c6b664",
+      "requested_on": "2026-09-10T11:59:11.3121002Z",
+      "status": "pending",
+      "username": "franemax"
     }
   ]
 }
