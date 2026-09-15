@@ -971,6 +971,12 @@
       "requested_on": "2026-09-15T12:46:39.883001Z",
       "status": "pending",
       "username": "Dreier Marian"
+    },
+    {
+      "device_id": "5cf23320-9a45-4e78-9453-0b1c7a5ce0eb",
+      "requested_on": "2026-09-15T23:58:58.7520719Z",
+      "status": "pending",
+      "username": "ADMIN"
     }
   ]
 }
