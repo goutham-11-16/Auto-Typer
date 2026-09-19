@@ -989,6 +989,12 @@
       "requested_on": "2026-09-18T15:54:03.8818785Z",
       "status": "pending",
       "username": "username"
+    },
+    {
+      "device_id": "f923e72c-787c-47c1-bace-7417cbadfa82",
+      "requested_on": "2026-09-19T17:53:55.2790638Z",
+      "status": "pending",
+      "username": "feupoco"
     }
   ]
 }
