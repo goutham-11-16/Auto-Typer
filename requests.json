@@ -1217,6 +1217,12 @@
       "requested_on": "2026-10-03T13:11:35.2614678Z",
       "status": "pending",
       "username": "gamma0909"
+    },
+    {
+      "device_id": "243420d1-958e-40aa-b8a6-17bf526e9b75",
+      "requested_on": "2026-10-04T02:54:28.5319561Z",
+      "status": "pending",
+      "username": "red_gamr"
     }
   ]
 }
