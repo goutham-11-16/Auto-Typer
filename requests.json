@@ -1319,6 +1319,12 @@
       "requested_on": "2026-10-11T15:04:01.0831808Z",
       "status": "pending",
       "username": "sebarkh"
+    },
+    {
+      "device_id": "9ca0c0f2-7418-498a-94a2-98b9b8b5527f",
+      "requested_on": "2026-10-12T16:01:37.1633629Z",
+      "status": "pending",
+      "username": "liivinsh"
     }
   ]
 }
