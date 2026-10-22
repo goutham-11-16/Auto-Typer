@@ -1451,6 +1451,12 @@
       "requested_on": "2026-10-22T16:14:21.7499176Z",
       "status": "pending",
       "username": "kower"
+    },
+    {
+      "device_id": "fa928471-cd96-4ed4-a679-06b9be409f85",
+      "requested_on": "2026-10-22T16:45:58.6414609Z",
+      "status": "pending",
+      "username": "void"
     }
   ]
 }
