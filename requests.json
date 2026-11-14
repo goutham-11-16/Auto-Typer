@@ -1775,6 +1775,12 @@
       "requested_on": "2026-11-14T07:54:27.445114Z",
       "status": "pending",
       "username": "sha256:b78baff5de670d2e956851658329bf70e3dceda9d795d4af4d7fd21d25133dc6"
+    },
+    {
+      "device_id": "b61c039a-d58f-4b27-ac23-3837139a2a47",
+      "requested_on": "2026-11-14T17:05:55.6257378Z",
+      "status": "pending",
+      "username": "supreme_deadass"
     }
   ]
 }
