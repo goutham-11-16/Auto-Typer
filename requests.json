@@ -1823,6 +1823,12 @@
       "requested_on": "2026-11-20T17:42:57.9743539Z",
       "status": "pending",
       "username": "Repeatedwall"
+    },
+    {
+      "device_id": "51ae570d-a561-42a0-b9ac-ad592bc8bea2",
+      "requested_on": "2026-11-20T23:53:54.8553947Z",
+      "status": "pending",
+      "username": "github user wanting to try it"
     }
   ]
 }
