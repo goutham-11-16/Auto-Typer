@@ -1997,6 +1997,12 @@
       "requested_on": "2026-11-28T03:41:16.9314606Z",
       "status": "pending",
       "username": "3542354"
+    },
+    {
+      "device_id": "40f600f2-9511-42ca-a30e-5eb533686c22",
+      "requested_on": "2026-11-28T05:02:38.8991495Z",
+      "status": "pending",
+      "username": "zer0day"
     }
   ]
 }
